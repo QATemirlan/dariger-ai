@@ -47,7 +47,7 @@ export default function Problem() {
         <Eyebrow>Проблема</Eyebrow>
         <h2 className="font-display text-[26px] sm:text-5xl leading-tight mb-4 max-w-3xl font-bold">
           Врач должен лечить,{" "}
-          <span className="text-muted">а не работать стенографистом</span>
+          <span className="text-muted">а не заполнять бумаги</span>
         </h2>
         <p className="text-muted text-lg max-w-2xl mb-12 leading-relaxed">
           Каждый день тысячи врачей в Казахстане тратят половину рабочего

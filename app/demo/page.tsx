@@ -21,6 +21,9 @@ import {
   AlertCircle,
   Zap,
   FileText,
+  PenLine,
+  X,
+  CheckCircle2,
 } from "lucide-react";
 import {
   misFields,
@@ -157,6 +160,11 @@ export default function DemoPage() {
   ]);
   const [chatInput, setChatInput] = useState("");
 
+  // Tour state: подсказка первого шага и тултип готового черновика
+  const [showTourHint, setShowTourHint] = useState(true);
+  const [showDraftTooltip, setShowDraftTooltip] = useState(false);
+  const [signed, setSigned] = useState(false);
+
   // Templates state
   const [templateTab, setTemplateTab] = useState<"learned" | "structured">("learned");
 
@@ -214,8 +222,19 @@ export default function DemoPage() {
     };
   }, [scenarioPhase]);
 
+  // После обработки логично перевести пользователя туда, где данные отображаются:
+  // автопереход на вкладку протокола + короткий тултип.
+  useEffect(() => {
+    if (scenarioPhase !== "ready") return;
+    setActiveTab("note");
+    setShowDraftTooltip(true);
+    const t = window.setTimeout(() => setShowDraftTooltip(false), 6000);
+    return () => window.clearTimeout(t);
+  }, [scenarioPhase]);
+
   const handleToggleRecord = () => {
     if (scenarioPhase === "processing") return;
+    setShowTourHint(false);
     if (scenarioPhase === "recording") {
       setRecordSeconds(REPLICA_MEDIA_SECONDS);
       setVisibleReplicas(replicas);
@@ -228,6 +247,7 @@ export default function DemoPage() {
     setRecordSeconds(0);
     setVisibleReplicas([]);
     setProcessingStage(-1);
+    setSigned(false);
     setScenarioPhase("recording");
     setActiveTab("transcript");
   };
@@ -460,31 +480,59 @@ export default function DemoPage() {
                   </span>
                 </div>
 
-                <button
-                  onClick={handleToggleRecord}
-                  disabled={scenarioPhase === "processing"}
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm disabled:cursor-wait disabled:opacity-60 ${
-                    scenarioPhase === "recording"
-                      ? "bg-danger text-white animate-pulse"
-                      : "bg-accent text-white hover:bg-accent-deep shadow-accent/20"
-                  }`}
-                >
-                  {scenarioPhase === "recording" ? (
+                <div className="relative">
+                  <button
+                    onClick={handleToggleRecord}
+                    disabled={scenarioPhase === "processing"}
+                    className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm disabled:cursor-wait disabled:opacity-60 ${
+                      scenarioPhase === "recording"
+                        ? "bg-danger text-white animate-pulse"
+                        : "bg-accent text-white hover:bg-accent-deep shadow-accent/20"
+                    } ${showTourHint && scenarioPhase === "idle" ? "ring-4 ring-accent/30 relative z-30" : ""}`}
+                  >
+                    {scenarioPhase === "recording" ? (
+                      <>
+                        <Square className="w-3.5 h-3.5 fill-current" /> Остановить запись
+                      </>
+                    ) : scenarioPhase === "processing" ? (
+                      <>Обрабатываем запись…</>
+                    ) : scenarioPhase === "ready" ? (
+                      <>
+                        <Play className="w-3.5 h-3.5 fill-current" /> Повторить демо
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3.5 h-3.5 fill-current" /> Запись приёма
+                      </>
+                    )}
+                  </button>
+
+                  {/* Подсказка первого шага: экран затухает, подсвечена кнопка записи */}
+                  {showTourHint && scenarioPhase === "idle" && (
                     <>
-                      <Square className="w-3.5 h-3.5 fill-current" /> Остановить запись
-                    </>
-                  ) : scenarioPhase === "processing" ? (
-                    <>Обрабатываем запись…</>
-                  ) : scenarioPhase === "ready" ? (
-                    <>
-                      <Play className="w-3.5 h-3.5 fill-current" /> Повторить демо
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-3.5 h-3.5 fill-current" /> Запись приёма
+                      <div className="fixed inset-0 z-20 bg-dark/50 backdrop-blur-[2px]" onClick={() => setShowTourHint(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute top-full right-0 mt-3 z-30 w-64 rounded-2xl bg-dark text-white p-4 shadow-xl"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-[11px] font-bold text-accent-light uppercase tracking-wider">Шаг 1 из 3</p>
+                          <button onClick={() => setShowTourHint(false)} aria-label="Закрыть подсказку" className="text-white/50 hover:text-white">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <p className="text-sm font-semibold mt-1.5 leading-snug">Начните новый приём</p>
+                        <p className="text-xs text-white/70 mt-1.5 leading-relaxed">
+                          Нажмите «Запись приёма» — демо воспроизведёт разговор врача с пациентом в ускоренном темпе.
+                        </p>
+                        <button onClick={() => setShowTourHint(false)} className="mt-3 w-full rounded-xl bg-accent text-white py-2 text-xs font-bold hover:bg-accent-deep">
+                          Понятно
+                        </button>
+                      </motion.div>
                     </>
                   )}
-                </button>
+                </div>
 
                 <button
                   onClick={handlePushToEhr}
@@ -612,8 +660,21 @@ export default function DemoPage() {
                   </div>
                 ) : (
                   <div className="max-w-3xl space-y-4">
-                    <div className="rounded-xl bg-success/10 border border-success/25 px-4 py-3 text-xs text-success font-semibold flex items-center justify-between">
-                      <span>✓ Черновик готов — врач проверяет и подписывает</span>
+                    {/* Тултип автоперехода: запись обработана — смотрите черновик */}
+                    {showDraftTooltip && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-xl bg-accent text-white px-4 py-3 text-xs font-semibold flex items-center justify-between shadow-md"
+                      >
+                        <span>Запись обработана — черновик готов, проверьте его перед подписью.</span>
+                        <button onClick={() => setShowDraftTooltip(false)} aria-label="Закрыть" className="text-white/70 hover:text-white shrink-0 ml-2">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </motion.div>
+                    )}
+                    <div className={`rounded-xl px-4 py-3 text-xs font-semibold flex items-center justify-between ${signed ? "bg-success/10 border border-success/30 text-success" : "bg-success/10 border border-success/25 text-success"}`}>
+                      <span>{signed ? "✓ Документы подписаны и отправлены в МИС" : "Черновик готов — врач проверяет и подписывает"}</span>
                       <span className="text-[11px] font-normal">AI Structured</span>
                     </div>
                   {noteDraft.map((sec) => (
@@ -654,6 +715,39 @@ export default function DemoPage() {
                         • {w.text} ({w.hint})
                       </p>
                     ))}
+                  </div>
+
+                  {/* Финал сценария: подписать документы */}
+                  <div className="rounded-2xl border border-border bg-white p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-ink">
+                        {signed ? "Приём завершён" : "Готово к подписи"}
+                      </p>
+                      <p className="text-xs text-muted mt-1 leading-relaxed max-w-sm">
+                        {signed
+                          ? "Документы подписаны и переданы в МИС. Демо-сценарий завершён — можно повторить его кнопкой «Повторить демо»."
+                          : "Проверьте черновик выше и подпишите документы — они будут переданы в МИС."}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSigned(true)}
+                      disabled={signed}
+                      className={`shrink-0 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold transition-all ${
+                        signed
+                          ? "bg-success/10 text-success border border-success/30 cursor-default"
+                          : "bg-accent text-white hover:bg-accent-deep shadow-md shadow-accent/20"
+                      }`}
+                    >
+                      {signed ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" /> Подписано ✓
+                        </>
+                      ) : (
+                        <>
+                          <PenLine className="w-4 h-4" /> Подписать документы
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               ))}

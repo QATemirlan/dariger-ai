@@ -15,6 +15,7 @@ test("demo plays recording, processing pipeline, and SOAP draft", async ({ page 
   await page.goto("/demo");
 
   await expect(page.getByText("Синтетический пример. Нет микрофона, сервера или реального обмена с МИС.")).toBeVisible();
+  await page.getByRole("button", { name: "Понятно" }).click();
   await page.getByRole("button", { name: "Начать демо-запись" }).click();
 
   await expect(page.getByText("Сәлеметсіз бе! Проходите.")).toBeVisible({ timeout: 3_000 });
@@ -30,6 +31,11 @@ test("demo plays recording, processing pipeline, and SOAP draft", async ({ page 
   await expect(page.getByText("Черновик готов — врач проверяет и подписывает")).toBeVisible({ timeout: 8_000 });
   await expect(page.getByText("Головокружение, преимущественно утром, ~3 недели")).toBeVisible();
   await expect(page.getByText("Клиническая проверка полноты")).toBeVisible();
+
+  // Финал сценария: подписать документы
+  await page.getByRole("button", { name: "Подписать документы" }).click();
+  await expect(page.getByText("Документы подписаны и переданы в МИС")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Подписано/ })).toBeDisabled();
 });
 
 test("MIS integration fills mapped fields only after the draft is ready", async ({ page }) => {

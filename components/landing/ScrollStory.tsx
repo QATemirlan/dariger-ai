@@ -399,18 +399,18 @@ export default function ScrollStory() {
               />
             </svg>
           )}
-          {/* Бегущий кончик линии */}
+          {/* Бегущий кончик линии — под плашками (без z-index), поверх только фона секции */}
           {geom && !reduced && (
             <motion.div
               ref={tipRef}
-              className="absolute left-0 top-0 z-10 pointer-events-none"
+              className="absolute left-0 top-0 pointer-events-none"
               style={{ opacity: tipOpacity }}
             >
               <div className="w-3.5 h-3.5 rounded-full bg-white border-[3px] border-accent shadow-[0_0_16px_rgba(166,124,82,0.45)]" />
             </motion.div>
           )}
 
-          <div className="space-y-16">
+          <div className="space-y-16 relative">
             {steps.map((step, idx) => (
               <div key={step.badge} className="relative">
                 {/* Пилюля этапа: на десктопе в своей колонке (зигзаг), на мобильном по центру */}
