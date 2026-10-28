@@ -85,7 +85,7 @@ export default function Products() {
                 <p className={`text-sm mt-1 ${p.dark ? "text-white/60" : "text-muted"}`}>
                   {p.audience}
                 </p>
-                <span className={`inline-block mt-3 text-xs font-semibold uppercase tracking-wider ${p.dark ? "text-accent" : "text-accent"}`}>
+                <span className={`inline-block mt-3 text-xs font-semibold uppercase tracking-wider ${p.dark ? "text-accent-dark" : "text-accent"}`}>
                   {p.price}
                 </span>
               </div>

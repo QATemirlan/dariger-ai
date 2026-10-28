@@ -51,8 +51,8 @@ export default function HeroAnimation() {
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
               1. Фоновая запись
             </span>
-            <span className="flex items-center gap-1.5 text-xs text-red-600 font-medium">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="flex items-center gap-1.5 text-xs text-danger font-medium">
+              <span className="w-2 h-2 rounded-full bg-danger animate-pulse" />
               rec
             </span>
           </div>

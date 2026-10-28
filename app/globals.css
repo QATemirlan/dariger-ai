@@ -1,37 +1,49 @@
 @import "tailwindcss";
 
+/* Vintage Paper (21st.dev / @serafimcloud) — только палитра, шрифты и layout не меняются */
 :root {
-  --paper: #F6F5F0;
-  --ink: #111318;
-  --accent: #2563EB;
-  --accent-deep: #1D4ED8;
-  --accent-light: #DBEAFE;
-  --accent-pale: #EFF6FF;
-  --marker: #34D399;
-  --success: #22A06B;
-  --warn: #F59E0B;
-  --dark: #161922;
-  --muted: #6B7280;
-  --border: rgba(17, 19, 24, 0.08);
-  --border-strong: rgba(17, 19, 24, 0.14);
-  --card-dark: #1E2028;
+  --paper: #f5f1e6;
+  --ink: #4a3f35;
+  --card: #fffcf5;
+  --accent: #a67c52;
+  --accent-deep: #8a6540;
+  --accent-dark: #c0a080;
+  --accent-light: #d4c8aa;
+  --accent-pale: #ece5d8;
+  --marker: #a3a05c;
+  --success: #75814e;
+  --warn: #b07a2e;
+  --danger: #b54a35;
+  --dark: #2d2621;
+  --muted: #7d6b56;
+  --border: #dbd0ba;
+  --border-strong: #cbbfa6;
+  --card-dark: #3a322c;
 }
 
 @theme inline {
   --color-paper: var(--paper);
   --color-ink: var(--ink);
+  --color-card: var(--card);
   --color-accent: var(--accent);
   --color-accent-deep: var(--accent-deep);
+  --color-accent-dark: var(--accent-dark);
   --color-accent-light: var(--accent-light);
   --color-accent-pale: var(--accent-pale);
   --color-marker: var(--marker);
   --color-success: var(--success);
   --color-warn: var(--warn);
+  --color-danger: var(--danger);
   --color-dark: var(--dark);
   --color-muted: var(--muted);
   --color-card-dark: var(--card-dark);
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Тёплая «бумага» вместо холодного белого: bg-white / text-white / border-white → #fffcf5 */
+@theme {
+  --color-white: #fffcf5;
 }
 
 html {
@@ -52,7 +64,7 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: #fff;
+  color: var(--card);
 }
 
 /* фокус-ринг */
@@ -62,9 +74,50 @@ body {
   border-radius: 4px;
 }
 
+/* слайдеры калькулятора */
+input[type="range"].dariger-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent-deep) var(--range-progress, 50%),
+    rgba(17, 19, 24, 0.1) var(--range-progress, 50%),
+    rgba(17, 19, 24, 0.1) 100%
+  );
+  outline: none;
+}
+input[type="range"].dariger-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 3px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(166, 124, 82, 0.35);
+  cursor: pointer;
+}
+input[type="range"].dariger-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 3px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(166, 124, 82, 0.35);
+  cursor: pointer;
+}
+input[type="range"].dariger-range:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
 /* dot-grid фон hero */
 .dot-grid {
-  background-image: radial-gradient(rgba(37, 99, 235, 0.10) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(74, 63, 53, 0.08) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 

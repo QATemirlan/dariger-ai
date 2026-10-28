@@ -1,8 +1,95 @@
 "use client";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import {
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useScroll,
+  useSpring,
+  useTransform,
+  type MotionValue,
+} from "framer-motion";
 import { Mic, ShieldCheck, FileText, CheckCircle2 } from "lucide-react";
 import Eyebrow from "@/components/shared/Eyebrow";
 import LangChip from "@/components/shared/LangChip";
+import { useReducedMotion } from "@/components/shared/useReducedMotion";
+
+const LINE_R = 18; // радиус скругления колен линии
+const LINE_DROP = 44; // отступ от пилюли до горизонтали змейки
+
+interface LineGeom {
+  w: number;
+  h: number;
+  d: string;
+  fractions: number[]; // доля длины пути до центра каждой пилюли
+}
+
+/** Змейка: вниз → колено → вбок → вниз к следующему пункту (как на nexus-med) */
+function buildSnake(
+  pillXs: number[],
+  pillYs: number[],
+  endY: number,
+  boxW: number,
+  boxH: number,
+): LineGeom {
+  const n = pillXs.length;
+  const straight = pillXs.every((x) => Math.abs(x - pillXs[0]) < 4);
+  const w = Math.max(1, boxW);
+  const h = Math.max(1, boxH);
+
+  if (straight || n < 2) {
+    const x = pillXs[0];
+    return {
+      w,
+      h,
+      d: `M ${x} 0 L ${x} ${endY}`,
+      fractions: pillYs.map((y) => Math.min(1, y / endY)),
+    };
+  }
+
+  let d = `M ${pillXs[0]} 0`;
+  const fractions: number[] = [];
+  let acc = 0;
+  let cx = pillXs[0];
+  let cy = 0;
+
+  for (let i = 0; i < n; i++) {
+    // вертикаль до центра пилюли i
+    acc += Math.abs(pillYs[i] - cy);
+    fractions.push(Math.min(1, acc));
+    cx = pillXs[i];
+    cy = pillYs[i];
+
+    if (i < n - 1) {
+      const nx = pillXs[i + 1];
+      const s = nx > cx ? 1 : -1;
+      const hy = Math.min(cy + LINE_DROP, pillYs[i + 1] - LINE_R - 4);
+      if (hy > cy + LINE_R && nx !== cx) {
+        // колено: вниз → дуга → горизонталь → дуга → вниз
+        acc += hy - LINE_R - cy;
+        acc += (Math.PI / 2) * LINE_R;
+        acc += Math.abs(nx - cx) - 2 * LINE_R;
+        acc += (Math.PI / 2) * LINE_R;
+        d += ` L ${cx} ${hy - LINE_R} Q ${cx} ${hy} ${cx + s * LINE_R} ${hy}`;
+        d += ` L ${nx - s * LINE_R} ${hy} Q ${nx} ${hy} ${nx} ${hy + LINE_R}`;
+        cy = hy + LINE_R;
+      } else {
+        // не хватает места — прямой диагональный переход
+        acc += Math.hypot(nx - cx, pillYs[i + 1] - cy);
+        d += ` L ${nx} ${pillYs[i + 1]}`;
+        cy = pillYs[i + 1];
+        cx = nx;
+      }
+    }
+  }
+
+  if (endY > cy + 2) {
+    acc += endY - cy;
+    d += ` L ${cx} ${endY}`;
+  }
+
+  return { w, h, d, fractions: fractions.map((f) => Math.min(1, f / acc)) };
+}
 
 interface StepData {
   badge: string;
@@ -28,7 +115,7 @@ export default function ScrollStory() {
         <div className="rounded-2xl border border-border bg-white p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between pb-3 border-b border-border">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="w-2.5 h-2.5 rounded-full bg-danger animate-pulse" />
               <span className="text-xs font-bold text-ink">Аудиопоток · 44.1 кГц</span>
             </div>
             <span className="text-[10px] bg-accent-pale text-accent px-2 py-0.5 rounded-full font-semibold">
@@ -76,7 +163,7 @@ export default function ScrollStory() {
         <div className="rounded-2xl border border-white/10 bg-dark text-white p-5 shadow-lg space-y-3">
           <div className="flex items-center justify-between pb-3 border-b border-white/10">
             <span className="text-xs font-bold text-white flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-accent" /> Модуль деидентификации
+              <ShieldCheck className="w-4 h-4 text-accent-dark" /> Модуль деидентификации
             </span>
             <span className="text-[10px] text-success font-mono bg-success/20 px-2 py-0.5 rounded">
               100% зашифровано
@@ -191,6 +278,78 @@ export default function ScrollStory() {
     },
   ];
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const drawnPathRef = useRef<SVGPathElement>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+  const pillRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const endRef = useRef<HTMLDivElement>(null);
+  const geomRef = useRef<LineGeom | null>(null);
+  const [geom, setGeom] = useState<LineGeom | null>(null);
+  const reduced = useReducedMotion();
+
+  useEffect(() => {
+    const measure = () => {
+      const c = containerRef.current;
+      if (!c) return;
+      const cr = c.getBoundingClientRect();
+      const pillXs: number[] = [];
+      const pillYs: number[] = [];
+      pillRefs.current.forEach((el) => {
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        pillXs.push(r.left - cr.left + r.width / 2);
+        pillYs.push(r.top - cr.top + r.height / 2);
+      });
+      if (pillXs.length === 0) return;
+      const dot = endRef.current;
+      let endY = cr.height;
+      if (dot) {
+        const dr = dot.getBoundingClientRect();
+        endY = dr.top - cr.top + dr.height / 2;
+      }
+      const g = buildSnake(pillXs, pillYs, endY, cr.width, cr.height);
+      geomRef.current = g;
+      setGeom(g);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
+    window.addEventListener("resize", measure);
+    document.fonts?.ready.then(measure).catch(() => {});
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
+  // Линия рисуется, пока секция проходит через вьюпорт (как на auxia.io)
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start 0.8", "end 0.5"],
+  });
+  const spring = useSpring(scrollYProgress, { stiffness: 80, damping: 24, restDelta: 0.001 });
+  const instant = useMotionValue(1);
+  const draw = reduced ? instant : spring;
+
+  const tipOpacity = useTransform(draw, [0, 0.015, 0.985, 1], [0, 1, 1, 0]);
+
+  // Кончик линии едет по пути через getPointAtLength
+  const positionTip = (v: number) => {
+    const path = drawnPathRef.current;
+    const tip = tipRef.current;
+    if (!path || !tip) return;
+    const len = path.getTotalLength();
+    const p = path.getPointAtLength(Math.max(0, Math.min(1, v)) * len);
+    tip.style.transform = `translate(${p.x}px, ${p.y}px) translate(-50%, -50%)`;
+  };
+  useMotionValueEvent(draw, "change", positionTip);
+  useEffect(() => {
+    positionTip(draw.get());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geom]);
+
+  const fracOf = (idx: number) => geomRef.current?.fractions[idx] ?? 0;
+
   return (
     <section id="how" className="py-20 px-6 relative overflow-hidden">
       <div className="mx-auto max-w-5xl">
@@ -205,24 +364,78 @@ export default function ScrollStory() {
           </p>
         </div>
 
-        {/* НЕПРЕРЫВНАЯ СИНЯЯ ЛЕНТА / CIRCUIT FLOW (ПО РЕФЕРЕНСУ AUXIA) */}
-        <div className="relative">
-          {/* Фоновая направляющая линия по центру */}
-          <div className="absolute left-6 md:left-1/2 top-4 bottom-8 w-[3px] -translate-x-1/2 bg-gradient-to-b from-accent via-accent-deep to-accent shadow-sm" />
+        {/* НЕПРЕРЫВНАЯ СИНЯЯ ЛЕНТА / SNAKE FLOW (ПО РЕФЕРЕНСУ NEXUS-MED) */}
+        <div ref={containerRef} className="relative">
+          {/* SVG-змейка: бледная трасса + яркая линия, рисующаяся по скроллу */}
+          {geom && (
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              viewBox={`0 0 ${geom.w} ${geom.h}`}
+              fill="none"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              <defs>
+                <linearGradient id="darigerFlow" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#a67c52" />
+                  <stop offset="100%" stopColor="#8a6540" />
+                </linearGradient>
+              </defs>
+              <path
+                d={geom.d}
+                stroke="#d4c8aa"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <motion.path
+                ref={drawnPathRef}
+                d={geom.d}
+                stroke="url(#darigerFlow)"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ pathLength: draw }}
+              />
+            </svg>
+          )}
+          {/* Бегущий кончик линии */}
+          {geom && !reduced && (
+            <motion.div
+              ref={tipRef}
+              className="absolute left-0 top-0 z-10 pointer-events-none"
+              style={{ opacity: tipOpacity }}
+            >
+              <div className="w-3.5 h-3.5 rounded-full bg-white border-[3px] border-accent shadow-[0_0_16px_rgba(166,124,82,0.45)]" />
+            </motion.div>
+          )}
 
           <div className="space-y-16">
             {steps.map((step, idx) => (
               <div key={step.badge} className="relative">
-                {/* Метка на синей линии (в стиле Auxia) */}
-                <div className="flex justify-center mb-6">
-                  <div className="relative z-10 inline-flex items-center gap-2 rounded-full bg-accent text-white px-5 py-2 text-xs font-bold shadow-lg shadow-accent/25 tracking-wide">
-                    <step.icon className="w-3.5 h-3.5" />
-                    <span>{step.badge}</span>
-                  </div>
+                {/* Пилюля этапа: на десктопе в своей колонке (зигзаг), на мобильном по центру */}
+                <div
+                  className={`mb-6 flex justify-center md:w-1/2 ${
+                    step.side === "right" ? "md:ml-auto" : ""
+                  }`}
+                >
+                  <StepNode
+                    progress={draw}
+                    fracGetter={() => fracOf(idx)}
+                    icon={step.icon}
+                    label={step.badge}
+                    pillRef={(el) => {
+                      pillRefs.current[idx] = el;
+                    }}
+                  />
                 </div>
 
                 {/* Подпись к этапу на ленте */}
-                <div className="text-center mb-6">
+                <div
+                  className={`mb-6 flex justify-center md:w-1/2 ${
+                    step.side === "right" ? "md:ml-auto" : ""
+                  }`}
+                >
                   <span className="font-mono text-[10px] sm:text-[11px] font-bold text-muted tracking-[0.2em] uppercase bg-paper px-3 py-1 rounded-full border border-border">
                     {step.lineLabel}
                   </span>
@@ -268,12 +481,58 @@ export default function ScrollStory() {
             ))}
           </div>
 
-          {/* Финальная точка синей линии */}
-          <div className="flex justify-center mt-12">
-            <div className="w-4 h-4 rounded-full bg-accent ring-4 ring-accent-light shadow-md" />
+          {/* Финальная точка — линия дорисовывается до неё, в колонке последнего шага */}
+          <div
+            className={`mt-12 flex justify-center md:w-1/2 ${
+              steps[steps.length - 1].side === "right" ? "md:ml-auto" : ""
+            }`}
+          >
+            <div
+              ref={endRef}
+              className="w-4 h-4 rounded-full bg-accent ring-4 ring-accent-light shadow-md"
+            />
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function StepNode({
+  progress,
+  fracGetter,
+  icon: Icon,
+  label,
+  pillRef,
+}: {
+  progress: MotionValue<number>;
+  fracGetter: () => number;
+  icon: typeof Mic;
+  label: string;
+  pillRef: (el: HTMLDivElement | null) => void;
+}) {
+  // 0 → пилюля ещё «не пройдена» линией, 1 → линия доросла до неё
+  const active = useTransform(progress, (v) => {
+    const f = fracGetter();
+    if (f <= 0) return 0;
+    return Math.max(0, Math.min(1, (v - (f - 0.035)) / 0.035));
+  });
+
+  return (
+    <div ref={pillRef} className="relative z-10">
+      {/* Базовое состояние: ещё не пройдено */}
+      <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-5 py-2 text-xs font-bold text-muted tracking-wide">
+        <Icon className="w-3.5 h-3.5" />
+        <span>{label}</span>
+      </div>
+      {/* Активное состояние: линия дошла */}
+      <motion.div
+        style={{ opacity: active }}
+        className="absolute inset-0 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2 text-xs font-bold text-white shadow-lg shadow-accent/25 tracking-wide"
+      >
+        <Icon className="w-3.5 h-3.5" />
+        <span>{label}</span>
+      </motion.div>
+    </div>
   );
 }

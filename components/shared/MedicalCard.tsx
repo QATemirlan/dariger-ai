@@ -4,7 +4,7 @@ export default function MedicalCard({ children, className = "" }: { children: Re
       className={`relative rounded-2xl border border-border bg-white shadow-md ${className}`}
       style={{
         backgroundImage:
-          "repeating-linear-gradient(transparent, transparent 27px, rgba(37,99,235,0.04) 27px, rgba(37,99,235,0.04) 28px)",
+          "repeating-linear-gradient(transparent, transparent 27px, rgba(166,124,82,0.06) 27px, rgba(166,124,82,0.06) 28px)",
       }}
     >
       {/* перфорация слева */}

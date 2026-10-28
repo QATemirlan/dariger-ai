@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -25,11 +25,15 @@ import {
   noteDraft,
   replicas,
   warnings,
+  pipeline,
+  REPLICA_MEDIA_SECONDS,
+  SPEEDUP,
 } from "@/lib/demo-data";
 import type { Replica } from "@/lib/demo-data";
 import LangChip from "@/components/shared/LangChip";
 
 type MainNav = "visits" | "templates" | "integration" | "settings";
+type ScenarioPhase = "idle" | "recording" | "processing" | "ready";
 
 interface PatientVisit {
   id: string;
@@ -133,9 +137,11 @@ export default function DemoPage() {
   const [selectedVisit, setSelectedVisit] = useState<PatientVisit>(mockVisits[0]);
 
   // Visit simulation state
-  const [isRecording, setIsRecording] = useState(false);
+  const [scenarioPhase, setScenarioPhase] = useState<ScenarioPhase>("idle");
   const [recordSeconds, setRecordSeconds] = useState(0);
-  const [visibleReplicas, setVisibleReplicas] = useState<Replica[]>(replicas.slice(0, 4));
+  const [visibleReplicas, setVisibleReplicas] = useState<Replica[]>([]);
+  const [processingStage, setProcessingStage] = useState(-1);
+  const simulationStartedAt = useRef<number | null>(null);
   const [activeTab, setActiveTab] = useState<"note" | "transcript" | "context">("note");
   const [copied, setCopied] = useState(false);
   const [pushSuccess, setPushSuccess] = useState(false);
@@ -156,28 +162,83 @@ export default function DemoPage() {
   const [selectedEhr, setSelectedEhr] = useState("DamuMed (ДамуМед)");
   const [pushedFields, setPushedFields] = useState<Record<string, boolean>>({});
 
-  // Timer effect for recording
+  // Ускоренная запись: 92 секунды приёма проигрываются в 5 раз быстрее.
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setRecordSeconds((s) => s + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isRecording]);
+    if (scenarioPhase !== "recording") return;
+
+    simulationStartedAt.current = Date.now();
+    const interval = window.setInterval(() => {
+      const startedAt = simulationStartedAt.current ?? Date.now();
+      const virtualSeconds = Math.min(
+        REPLICA_MEDIA_SECONDS,
+        ((Date.now() - startedAt) / 1000) * SPEEDUP,
+      );
+      setRecordSeconds(Math.floor(virtualSeconds));
+      setVisibleReplicas(replicas.filter((replica) => replica.at <= virtualSeconds));
+
+      if (virtualSeconds >= REPLICA_MEDIA_SECONDS) {
+        window.clearInterval(interval);
+        setScenarioPhase("processing");
+        setProcessingStage(0);
+      }
+    }, 100);
+
+    return () => window.clearInterval(interval);
+  }, [scenarioPhase]);
+
+  // Пайплайн намеренно ускорен: он показывает последовательность, но не заставляет
+  // посетителя ждать реальные расчётные секунды из демо-данных.
+  useEffect(() => {
+    if (scenarioPhase !== "processing") return;
+
+    let cancelled = false;
+    let stage = 1;
+    const advance = () => {
+      if (cancelled) return;
+      if (stage >= pipeline.length) {
+        setScenarioPhase("ready");
+        setProcessingStage(pipeline.length);
+        return;
+      }
+      setProcessingStage(stage);
+      stage += 1;
+      window.setTimeout(advance, 850);
+    };
+
+    const timeout = window.setTimeout(advance, 850);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [scenarioPhase]);
 
   const handleToggleRecord = () => {
-    if (!isRecording) {
-      setIsRecording(true);
-      // Reveal all replicas gradually
+    if (scenarioPhase === "processing") return;
+    if (scenarioPhase === "recording") {
+      setRecordSeconds(REPLICA_MEDIA_SECONDS);
       setVisibleReplicas(replicas);
-    } else {
-      setIsRecording(false);
+      setScenarioPhase("processing");
+      setProcessingStage(0);
+      return;
     }
+
+    simulationStartedAt.current = Date.now();
+    setRecordSeconds(0);
+    setVisibleReplicas([]);
+    setProcessingStage(-1);
+    setScenarioPhase("recording");
+    setActiveTab("transcript");
   };
 
-  const handleCopyNote = () => {
+  const handleCopyNote = async () => {
+    const text = noteDraft
+      .map((section) => `${section.title}\n${section.lines.map((line) => `• ${line.text}`).join("\n")}`)
+      .join("\n\n");
+    try {
+      await navigator.clipboard?.writeText(text);
+    } catch {
+      // В некоторых preview-средах Clipboard API недоступен — оставляем визуальный fallback.
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -200,6 +261,7 @@ export default function DemoPage() {
   };
 
   const handlePushToEhr = () => {
+    if (scenarioPhase !== "ready") return;
     setPushSuccess(true);
     const updated: Record<string, boolean> = {};
     misFields.forEach((f) => (updated[f.field] = true));
@@ -225,7 +287,7 @@ export default function DemoPage() {
                 Д
               </span>
               <span className="hidden md:block font-bold text-base tracking-tight text-white">
-                Dariger<span className="text-accent"> AI</span>
+                Dariger<span className="text-accent-dark"> AI</span>
               </span>
             </Link>
           </div>
@@ -296,7 +358,7 @@ export default function DemoPage() {
           <div className="mt-2 text-center md:text-left">
             <Link
               href="/"
-              className="text-[11px] text-accent hover:underline hidden md:inline-block px-2"
+              className="text-[11px] text-accent-dark hover:underline hidden md:inline-block px-2"
             >
               ← На главную сайта
             </Link>
@@ -371,41 +433,49 @@ export default function DemoPage() {
           </div>
 
           {/* Рабочая зона активного визита */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-paper">
+          <div className="min-w-0 flex-1 flex flex-col overflow-hidden bg-paper">
             {/* Панель визита: шапка с кнопкой Capture */}
-            <div className="h-18 bg-white border-b border-border px-6 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="font-bold text-lg text-ink">{selectedVisit.name}</h1>
-                    <span className="text-xs rounded-full bg-accent-pale text-accent px-2.5 py-0.5 font-medium border border-accent/20">
-                      Повторный пациент
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted mt-0.5">
-                    {selectedVisit.gender}, {selectedVisit.age} лет · ИИН {selectedVisit.iinMasked} · Приём в 14:30
-                  </p>
+            <div className="min-h-18 h-auto bg-white border-b border-border px-3 sm:px-6 py-2 sm:py-0 flex items-center gap-3 justify-between shrink-0">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h1 className="font-bold text-base sm:text-lg text-ink truncate max-w-[145px] sm:max-w-none">{selectedVisit.name}</h1>
+                  <span className="hidden sm:inline text-xs rounded-full bg-accent-pale text-accent px-2.5 py-0.5 font-medium border border-accent/20 shrink-0">
+                    Повторный пациент
+                  </span>
                 </div>
+                <p className="text-[11px] sm:text-xs text-muted mt-0.5 truncate">
+                  {selectedVisit.gender}, {selectedVisit.age} лет · ИИН {selectedVisit.iinMasked} · Приём в 14:30
+                </p>
               </div>
 
               {/* Кнопка Capture аудио */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-paper border border-border px-3 py-1.5 rounded-xl font-mono text-xs">
+              <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                <div className="flex items-center gap-1 sm:gap-2 bg-paper border border-border px-2 sm:px-3 py-1.5 rounded-xl font-mono text-[11px] sm:text-xs whitespace-nowrap">
                   <Clock className="w-3.5 h-3.5 text-muted" />
-                  <span>{formatTimer(recordSeconds || 92)}</span>
+                  <span>{formatTimer(recordSeconds)}</span>
+                  <span className="hidden sm:inline text-[10px] text-muted">
+                    из {formatTimer(REPLICA_MEDIA_SECONDS)} · ускорение ×{SPEEDUP}
+                  </span>
                 </div>
 
                 <button
                   onClick={handleToggleRecord}
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm ${
-                    isRecording
-                      ? "bg-red-600 text-white animate-pulse"
+                  disabled={scenarioPhase === "processing"}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm disabled:cursor-wait disabled:opacity-60 ${
+                    scenarioPhase === "recording"
+                      ? "bg-danger text-white animate-pulse"
                       : "bg-accent text-white hover:bg-accent-deep shadow-accent/20"
                   }`}
                 >
-                  {isRecording ? (
+                  {scenarioPhase === "recording" ? (
                     <>
                       <Square className="w-3.5 h-3.5 fill-current" /> Остановить запись
+                    </>
+                  ) : scenarioPhase === "processing" ? (
+                    <>Обрабатываем запись…</>
+                  ) : scenarioPhase === "ready" ? (
+                    <>
+                      <Play className="w-3.5 h-3.5 fill-current" /> Повторить демо
                     </>
                   ) : (
                     <>
@@ -416,7 +486,8 @@ export default function DemoPage() {
 
                 <button
                   onClick={handlePushToEhr}
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-dark text-white px-4 py-2.5 text-xs font-semibold hover:bg-dark/80 transition-colors"
+                  disabled={scenarioPhase !== "ready"}
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-dark text-white px-4 py-2.5 text-xs font-semibold hover:bg-dark/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Plug className="w-3.5 h-3.5" /> Вставить в МИС
                 </button>
@@ -424,8 +495,8 @@ export default function DemoPage() {
             </div>
 
             {/* Вкладки: Протокол (SOAP) / Транскрипт kk-ru / Контекст */}
-            <div className="border-b border-border bg-white px-6 flex items-center justify-between">
-              <div className="flex gap-6">
+            <div className="border-b border-border bg-white px-3 sm:px-6 flex items-center justify-between overflow-x-auto">
+              <div className="flex gap-4 sm:gap-6 min-w-max">
                 <button
                   onClick={() => setActiveTab("note")}
                   className={`py-3 text-xs font-semibold border-b-2 transition-colors ${
@@ -486,7 +557,57 @@ export default function DemoPage() {
               )}
 
               {activeTab === "note" && (
-                <div className="max-w-3xl space-y-4">
+                scenarioPhase !== "ready" ? (
+                  <div className="max-w-3xl space-y-4">
+                    <div className="rounded-2xl border border-accent/20 bg-white p-8 text-center shadow-sm">
+                      <div className="mx-auto w-12 h-12 rounded-2xl bg-accent-pale text-accent flex items-center justify-center mb-4">
+                        {scenarioPhase === "processing" ? <Sparkles className="w-6 h-6 animate-pulse" /> : <Play className="w-6 h-6" />}
+                      </div>
+                      <h2 className="font-bold text-lg">
+                        {scenarioPhase === "idle" ? "Готовы начать демонстрационный приём?" : scenarioPhase === "recording" ? "Черновик формируется из живой речи" : "Dariger обрабатывает запись"}
+                      </h2>
+                      <p className="text-sm text-muted mt-2 max-w-md mx-auto leading-relaxed">
+                        {scenarioPhase === "idle"
+                          ? "Нажмите «Запись приёма», чтобы увидеть, как смешанная речь врача и пациента превращается в структурированный протокол."
+                          : scenarioPhase === "recording"
+                          ? "После записи система распознает речь, обезличит данные и подготовит SOAP-протокол по форме №025/у."
+                          : "Последовательно проходят распознавание, деидентификация, структурирование и проверка полноты."}
+                      </p>
+                      {scenarioPhase === "idle" && (
+                        <button onClick={handleToggleRecord} className="mt-5 rounded-full bg-accent text-white px-5 py-2.5 text-xs font-bold shadow-md shadow-accent/20 hover:bg-accent-deep">
+                          <Play className="w-3.5 h-3.5 inline mr-1.5 fill-current" /> Начать демо-запись
+                        </button>
+                      )}
+                    </div>
+                    {scenarioPhase === "processing" && (
+                      <div className="rounded-2xl border border-border bg-white p-5 space-y-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-accent mb-3">Пайплайн обработки</p>
+                        {pipeline.map((stage, index) => {
+                          const complete = processingStage > index;
+                          const current = processingStage === index;
+                          return (
+                            <div key={stage.label} className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${current ? "border-accent bg-accent-pale" : complete ? "border-success/20 bg-success/5" : "border-border bg-paper/50"}`}>
+                              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${complete ? "bg-success text-white" : current ? "bg-accent text-white" : "bg-white text-muted border border-border"}`}>
+                                {complete ? "✓" : index + 1}
+                              </span>
+                              <div className="flex-1">
+                                <p className="text-xs font-semibold">{stage.label}</p>
+                                <p className="text-[10px] text-muted mt-0.5">{stage.detail}</p>
+                              </div>
+                              {current && <span className="text-[10px] text-accent font-semibold animate-pulse">Обработка…</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <p className="text-[11px] text-muted text-center">Синтетический пример. Нет микрофона, сервера или реального обмена с МИС. ИИ-подсказки не заменяют решение врача.</p>
+                  </div>
+                ) : (
+                  <div className="max-w-3xl space-y-4">
+                    <div className="rounded-xl bg-success/10 border border-success/25 px-4 py-3 text-xs text-success font-semibold flex items-center justify-between">
+                      <span>✓ Черновик готов — врач проверяет и подписывает</span>
+                      <span className="text-[10px] font-normal">AI Structured</span>
+                    </div>
                   {noteDraft.map((sec) => (
                     <div
                       key={sec.id}
@@ -527,7 +648,7 @@ export default function DemoPage() {
                     ))}
                   </div>
                 </div>
-              )}
+              ))}
 
               {activeTab === "transcript" && (
                 <div className="max-w-2xl space-y-3">
@@ -794,6 +915,15 @@ export default function DemoPage() {
 
           <div className="flex-1 overflow-y-auto px-8 py-6">
             <div className="max-w-5xl mx-auto space-y-6">
+              {pushSuccess && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-xl bg-success/10 border border-success/30 p-3.5 text-xs text-success font-semibold"
+                >
+                  ✓ Данные протокола успешно переданы в МИС (DamuMed)! Все поля заполнены.
+                </motion.div>
+              )}
               {/* Симуляция плавающего окна расширения поверх DamuMed (по demo2.png) */}
               <div className="rounded-3xl border border-border bg-dark text-white p-6 shadow-xl">
                 <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
@@ -805,7 +935,7 @@ export default function DemoPage() {
                       https://damumed.kz/doctor/encounter/104928
                     </span>
                   </div>
-                  <span className="text-xs text-accent font-semibold bg-accent/20 px-3 py-1 rounded-full">
+                  <span className="text-xs text-accent-dark font-semibold bg-accent/20 px-3 py-1 rounded-full">
                     DamuMed + Dariger Extension
                   </span>
                 </div>
@@ -858,16 +988,16 @@ export default function DemoPage() {
 
                     <div className="space-y-2 pt-2 border-t border-border text-xs">
                       {[
-                        "Жалобы пациента",
-                        "Анамнез заболевания",
-                        "Объективный статус",
-                        "Код МКБ-10 (I10)",
-                        "Назначения и рецепты",
+                        { label: "Жалобы пациента", field: "Жалобы" },
+                        { label: "Анамнез заболевания", field: "Анамнез" },
+                        { label: "Объективный статус", field: "Объективно" },
+                        { label: "Код МКБ-10 (I10)", field: "Диагноз" },
+                        { label: "Назначения и рецепты", field: "Назначения" },
                       ].map((item) => (
-                        <div key={item} className="flex items-center justify-between text-muted">
-                          <span>{item}</span>
+                        <div key={item.field} className="flex items-center justify-between text-muted">
+                          <span>{item.label}</span>
                           <span className="text-success text-[10px] font-semibold">
-                            {pushedFields[item] ? "✓ Заполнено" : "Готово к переносу"}
+                            {pushedFields[item.field] ? "✓ Заполнено" : "Готово к переносу"}
                           </span>
                         </div>
                       ))}
