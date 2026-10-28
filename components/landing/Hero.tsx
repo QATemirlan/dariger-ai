@@ -26,7 +26,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="font-display text-[40px] sm:text-6xl lg:text-[76px] leading-[1.06] tracking-[-0.03em] font-bold"
+            className="font-display text-[32px] sm:text-6xl lg:text-[76px] leading-[1.06] tracking-[-0.03em] font-bold"
           >
             Врач говорит.
             <br />

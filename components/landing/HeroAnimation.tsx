@@ -49,7 +49,7 @@ export default function HeroAnimation() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-              1. Фоновая запись
+              Фоновая запись
             </span>
             <span className="flex items-center gap-1.5 text-xs text-danger font-medium">
               <span className="w-2 h-2 rounded-full bg-danger animate-pulse" />
@@ -101,7 +101,7 @@ export default function HeroAnimation() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-accent">
-              2. ИИ-пайплайн
+              ИИ-пайплайн
             </span>
             <span className="text-xs text-accent font-medium">~3.8 с</span>
           </div>
@@ -119,7 +119,7 @@ export default function HeroAnimation() {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 1.8 + i * 0.8, type: "spring", stiffness: 400, damping: 15 }}
-                  className="w-5 h-5 rounded-full bg-success text-white flex items-center justify-center text-[10px] shrink-0"
+                  className="w-5 h-5 rounded-full bg-success text-white flex items-center justify-center text-[11px] shrink-0"
                 >
                   ✓
                 </motion.span>
@@ -147,9 +147,9 @@ export default function HeroAnimation() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold uppercase tracking-wider text-accent">
-              3. Протокол осмотра
+              Протокол осмотра
             </span>
-            <span className="text-[10px] text-muted font-mono bg-accent-pale px-2 py-0.5 rounded-full">
+            <span className="text-[11px] text-muted font-mono bg-accent-pale px-2 py-0.5 rounded-full">
               форма №025/у
             </span>
           </div>
@@ -163,7 +163,7 @@ export default function HeroAnimation() {
                 transition={{ delay: 4.8 + i * 0.6 }}
                 className="text-[12px] p-2 rounded-lg bg-paper border border-border/80"
               >
-                <span className="text-accent text-[10px] uppercase tracking-wider font-semibold block">
+                <span className="text-accent text-[11px] uppercase tracking-wider font-semibold block">
                   {r.label}
                 </span>
                 <p className="text-ink leading-tight mt-0.5 font-medium line-clamp-1">{r.value}</p>

@@ -34,7 +34,7 @@ export default function PlatformLayers() {
   return (
     <section className="py-20 px-6">
       <div className="mx-auto max-w-6xl">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Левая часть — слои */}
           <motion.div
             variants={container}

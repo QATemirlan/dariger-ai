@@ -19,6 +19,8 @@ import {
   Copy,
   Download,
   AlertCircle,
+  Zap,
+  FileText,
 } from "lucide-react";
 import {
   misFields,
@@ -352,7 +354,7 @@ export default function DemoPage() {
             </div>
             <div className="hidden md:block overflow-hidden">
               <p className="text-xs font-semibold text-white truncate">Д-р Искакова А.</p>
-              <p className="text-[10px] text-white/50 truncate">Врач-терапевт</p>
+              <p className="text-[11px] text-white/50 truncate">Врач-терапевт</p>
             </div>
           </div>
           <div className="mt-2 text-center md:text-left">
@@ -423,7 +425,7 @@ export default function DemoPage() {
                           : "bg-warn"
                       }`}
                     />
-                    <span className="text-[10px] text-muted">
+                    <span className="text-[11px] text-muted">
                       {v.status === "active" ? "Идёт приём" : v.status === "completed" ? "Завершён" : "Ожидает"}
                     </span>
                   </div>
@@ -453,7 +455,7 @@ export default function DemoPage() {
                 <div className="flex items-center gap-1 sm:gap-2 bg-paper border border-border px-2 sm:px-3 py-1.5 rounded-xl font-mono text-[11px] sm:text-xs whitespace-nowrap">
                   <Clock className="w-3.5 h-3.5 text-muted" />
                   <span>{formatTimer(recordSeconds)}</span>
-                  <span className="hidden sm:inline text-[10px] text-muted">
+                  <span className="hidden sm:inline text-[11px] text-muted">
                     из {formatTimer(REPLICA_MEDIA_SECONDS)} · ускорение ×{SPEEDUP}
                   </span>
                 </div>
@@ -495,10 +497,12 @@ export default function DemoPage() {
             </div>
 
             {/* Вкладки: Протокол (SOAP) / Транскрипт kk-ru / Контекст */}
-            <div className="border-b border-border bg-white px-3 sm:px-6 flex items-center justify-between overflow-x-auto">
+            <div role="tablist" aria-label="Данные приёма" className="border-b border-border bg-white px-3 sm:px-6 flex items-center justify-between overflow-x-auto">
               <div className="flex gap-4 sm:gap-6 min-w-max">
                 <button
                   onClick={() => setActiveTab("note")}
+                  role="tab"
+                  aria-selected={activeTab === "note"}
                   className={`py-3 text-xs font-semibold border-b-2 transition-colors ${
                     activeTab === "note"
                       ? "border-accent text-accent"
@@ -509,6 +513,8 @@ export default function DemoPage() {
                 </button>
                 <button
                   onClick={() => setActiveTab("transcript")}
+                  role="tab"
+                  aria-selected={activeTab === "transcript"}
                   className={`py-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
                     activeTab === "transcript"
                       ? "border-accent text-accent"
@@ -516,12 +522,14 @@ export default function DemoPage() {
                   }`}
                 >
                   Живой транскрипт (kk/ru)
-                  <span className="text-[10px] bg-accent-pale text-accent px-1.5 py-0.5 rounded-md">
+                  <span className="text-[11px] bg-accent-pale text-accent px-1.5 py-0.5 rounded-md">
                     {visibleReplicas.length}
                   </span>
                 </button>
                 <button
                   onClick={() => setActiveTab("context")}
+                  role="tab"
+                  aria-selected={activeTab === "context"}
                   className={`py-3 text-xs font-semibold border-b-2 transition-colors ${
                     activeTab === "context"
                       ? "border-accent text-accent"
@@ -587,14 +595,14 @@ export default function DemoPage() {
                           const current = processingStage === index;
                           return (
                             <div key={stage.label} className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${current ? "border-accent bg-accent-pale" : complete ? "border-success/20 bg-success/5" : "border-border bg-paper/50"}`}>
-                              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${complete ? "bg-success text-white" : current ? "bg-accent text-white" : "bg-white text-muted border border-border"}`}>
+                              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${complete ? "bg-success text-white" : current ? "bg-accent text-white" : "bg-white text-muted border border-border"}`}>
                                 {complete ? "✓" : index + 1}
                               </span>
                               <div className="flex-1">
                                 <p className="text-xs font-semibold">{stage.label}</p>
-                                <p className="text-[10px] text-muted mt-0.5">{stage.detail}</p>
+                                <p className="text-[11px] text-muted mt-0.5">{stage.detail}</p>
                               </div>
-                              {current && <span className="text-[10px] text-accent font-semibold animate-pulse">Обработка…</span>}
+                              {current && <span className="text-[11px] text-accent font-semibold animate-pulse">Обработка…</span>}
                             </div>
                           );
                         })}
@@ -606,7 +614,7 @@ export default function DemoPage() {
                   <div className="max-w-3xl space-y-4">
                     <div className="rounded-xl bg-success/10 border border-success/25 px-4 py-3 text-xs text-success font-semibold flex items-center justify-between">
                       <span>✓ Черновик готов — врач проверяет и подписывает</span>
-                      <span className="text-[10px] font-normal">AI Structured</span>
+                      <span className="text-[11px] font-normal">AI Structured</span>
                     </div>
                   {noteDraft.map((sec) => (
                     <div
@@ -617,7 +625,7 @@ export default function DemoPage() {
                         <h3 className="text-xs font-bold uppercase tracking-wider text-accent">
                           {sec.title}
                         </h3>
-                        <span className="text-[10px] text-muted bg-paper px-2 py-0.5 rounded">
+                        <span className="text-[11px] text-muted bg-paper px-2 py-0.5 rounded">
                           AI Structured
                         </span>
                       </div>
@@ -626,7 +634,7 @@ export default function DemoPage() {
                           <div key={i} className="flex items-start justify-between gap-3 text-sm">
                             <p className="text-ink leading-relaxed">{l.text}</p>
                             {l.src && (
-                              <span className="text-[10px] text-accent/80 font-mono shrink-0 mt-0.5 bg-accent-pale px-1.5 py-0.5 rounded">
+                              <span className="text-[11px] text-accent/80 font-mono shrink-0 mt-0.5 bg-accent-pale px-1.5 py-0.5 rounded">
                                 [реплика #{l.src.join(", ")}]
                               </span>
                             )}
@@ -666,7 +674,7 @@ export default function DemoPage() {
                       }`}
                     >
                       <span
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
                           r.speaker === "doctor"
                             ? "bg-accent text-white"
                             : "bg-paper text-muted border border-border"
@@ -721,29 +729,31 @@ export default function DemoPage() {
                 <Sparkles className="w-4 h-4 text-accent" />
                 <span className="font-bold text-sm">AI Клинический ассистент</span>
               </div>
-              <span className="text-[10px] text-muted bg-paper px-2 py-0.5 rounded">МЗ РК</span>
+              <span className="text-[11px] text-muted bg-paper px-2 py-0.5 rounded">МЗ РК</span>
             </div>
 
             {/* Quick action chips */}
             <div className="p-3 border-b border-border bg-paper/50 space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase text-muted tracking-wider">
+              <p className="text-[11px] font-semibold uppercase text-muted tracking-wider">
                 Быстрые вопросы
               </p>
               <button
                 onClick={() => {
                   setChatInput("Проверить совместимость эналаприла и НПВП");
                 }}
-                className="w-full text-left text-[11px] p-2 rounded-lg bg-white border border-border hover:border-accent/40 text-muted hover:text-ink transition-colors line-clamp-1"
+                className="w-full flex items-center gap-2 text-left text-[11px] p-2 rounded-lg bg-white border border-border hover:border-accent/40 text-muted hover:text-ink transition-colors"
               >
-                ⚡ Совместимость эналаприла и НПВП
+                <Zap className="w-3.5 h-3.5 text-warn shrink-0" />
+                <span className="line-clamp-1">Совместимость эналаприла и НПВП</span>
               </button>
               <button
                 onClick={() => {
                   setChatInput("Клинический протокол МЗ РК по АГ");
                 }}
-                className="w-full text-left text-[11px] p-2 rounded-lg bg-white border border-border hover:border-accent/40 text-muted hover:text-ink transition-colors line-clamp-1"
+                className="w-full flex items-center gap-2 text-left text-[11px] p-2 rounded-lg bg-white border border-border hover:border-accent/40 text-muted hover:text-ink transition-colors"
               >
-                📋 Протокол МЗ РК при гипертензии
+                <FileText className="w-3.5 h-3.5 text-accent shrink-0" />
+                <span className="line-clamp-1">Протокол МЗ РК при гипертензии</span>
               </button>
             </div>
 
@@ -970,7 +980,7 @@ export default function DemoPage() {
                         </span>
                         <span className="font-bold text-sm">Dariger Widget</span>
                       </div>
-                      <span className="text-[10px] bg-success/15 text-success font-semibold px-2 py-0.5 rounded">
+                      <span className="text-[11px] bg-success/15 text-success font-semibold px-2 py-0.5 rounded">
                         Подключено к МИС
                       </span>
                     </div>
@@ -996,7 +1006,7 @@ export default function DemoPage() {
                       ].map((item) => (
                         <div key={item.field} className="flex items-center justify-between text-muted">
                           <span>{item.label}</span>
-                          <span className="text-success text-[10px] font-semibold">
+                          <span className="text-success text-[11px] font-semibold">
                             {pushedFields[item.field] ? "✓ Заполнено" : "Готово к переносу"}
                           </span>
                         </div>

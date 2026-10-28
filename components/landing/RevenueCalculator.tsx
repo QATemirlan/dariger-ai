@@ -117,7 +117,7 @@ export default function RevenueCalculator() {
       <div className="mx-auto max-w-6xl">
         <div className="max-w-3xl mb-12">
           <Eyebrow>Потенциал выручки</Eyebrow>
-          <h2 className="font-display text-3xl sm:text-5xl font-bold leading-tight mb-4">
+          <h2 className="font-display text-[26px] sm:text-5xl font-bold leading-tight mb-4">
             Сколько <span className="text-accent">выручки</span> клиника
             <br className="hidden sm:block" /> теряет на документации
           </h2>
@@ -127,11 +127,11 @@ export default function RevenueCalculator() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           {/* Панель сценария */}
           <div className="rounded-3xl border border-border bg-white p-7 sm:p-9 shadow-sm flex flex-col gap-8">
             <div>
-              <p className="font-mono text-[11px] font-bold text-muted tracking-[0.2em] uppercase mb-2">
+              <p className="text-[11px] font-bold text-muted tracking-[0.14em] uppercase mb-2">
                 Сценарий расчёта
               </p>
               <p className="text-sm text-muted leading-relaxed">
@@ -183,7 +183,7 @@ export default function RevenueCalculator() {
           {/* Панель результата */}
           <div className="rounded-3xl bg-dark text-white p-7 sm:p-9 shadow-xl flex flex-col gap-6">
             <div>
-              <p className="font-mono text-[11px] font-bold text-accent-light tracking-[0.2em] uppercase mb-2">
+              <p className="text-[11px] font-bold text-accent-light tracking-[0.14em] uppercase mb-2">
                 Потенциал возврата
               </p>
               <p className="text-sm text-white/70 leading-relaxed">
@@ -200,7 +200,7 @@ export default function RevenueCalculator() {
                 <AnimatedNumber value={lostPerMonth} />
                 <span className="text-3xl sm:text-4xl"> ₸</span>
               </p>
-              <p className="font-mono text-[11px] font-bold text-accent-light tracking-[0.2em] uppercase mt-2">
+              <p className="text-[11px] font-bold text-accent-light tracking-[0.14em] uppercase mt-2">
                 Дополнительно в месяц
               </p>
             </div>

@@ -38,7 +38,7 @@ export default function BigNumber() {
             <motion.div
               key={s.label}
               variants={item}
-              className="rounded-2xl border border-border bg-white p-8 text-center"
+              className="rounded-2xl border border-border bg-card p-8 text-center"
             >
               <p className="font-display text-5xl font-bold text-accent">{s.value}</p>
               <p className="text-sm font-medium mt-3">{s.label}</p>

@@ -118,7 +118,7 @@ export default function ScrollStory() {
               <span className="w-2.5 h-2.5 rounded-full bg-danger animate-pulse" />
               <span className="text-xs font-bold text-ink">Аудиопоток · 44.1 кГц</span>
             </div>
-            <span className="text-[10px] bg-accent-pale text-accent px-2 py-0.5 rounded-full font-semibold">
+            <span className="text-[11px] bg-accent-pale text-accent px-2 py-0.5 rounded-full font-semibold">
               Live ASR
             </span>
           </div>
@@ -126,7 +126,7 @@ export default function ScrollStory() {
           <div className="space-y-2">
             <div className="p-2.5 rounded-xl bg-accent-pale/40 border border-accent/15 text-xs">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold text-muted">#1 Пациент</span>
+                <span className="text-[11px] font-bold text-muted">#1 Пациент</span>
                 <LangChip lang="mix" />
               </div>
               <p className="text-ink">«Басым айналып жүр уже недели три, особенно по утрам.»</p>
@@ -134,7 +134,7 @@ export default function ScrollStory() {
 
             <div className="p-2.5 rounded-xl bg-paper border border-border text-xs">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold text-muted">#2 Врач</span>
+                <span className="text-[11px] font-bold text-muted">#2 Врач</span>
                 <LangChip lang="ru" />
               </div>
               <p className="text-ink">«Давление дома меряете? Какие обычные цифры?»</p>
@@ -142,7 +142,7 @@ export default function ScrollStory() {
 
             <div className="p-2.5 rounded-xl bg-accent-pale/40 border border-accent/15 text-xs">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold text-muted">#3 Пациент</span>
+                <span className="text-[11px] font-bold text-muted">#3 Пациент</span>
                 <LangChip lang="mix" />
               </div>
               <p className="text-ink">«Утром до 150 на 95, эналаприл ішемін, бірақ кейде ұмытып қаламын.»</p>
@@ -165,7 +165,7 @@ export default function ScrollStory() {
             <span className="text-xs font-bold text-white flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-accent-dark" /> Модуль деидентификации
             </span>
-            <span className="text-[10px] text-success font-mono bg-success/20 px-2 py-0.5 rounded">
+            <span className="text-[11px] text-success font-mono bg-success/20 px-2 py-0.5 rounded">
               100% зашифровано
             </span>
           </div>
@@ -173,7 +173,7 @@ export default function ScrollStory() {
           <div className="space-y-2 text-xs">
             <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
               <div>
-                <p className="text-white/50 text-[10px]">ФИО пациента</p>
+                <p className="text-white/50 text-[11px]">ФИО пациента</p>
                 <p className="font-mono text-white/90">Ибрагимова А. → [PATIENT_ID_7492]</p>
               </div>
               <span className="text-success text-xs font-bold">✓ Скрыто</span>
@@ -181,13 +181,13 @@ export default function ScrollStory() {
 
             <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
               <div>
-                <p className="text-white/50 text-[10px]">Индивидуальный номер (ИИН)</p>
+                <p className="text-white/50 text-[11px]">Индивидуальный номер (ИИН)</p>
                 <p className="font-mono text-white/90">760412301984 → [IIN_TOKEN_9182]</p>
               </div>
               <span className="text-success text-xs font-bold">✓ Скрыто</span>
             </div>
 
-            <p className="text-[10px] text-white/40 pt-1">
+            <p className="text-[11px] text-white/40 pt-1">
               Локальный контур ЦОД г. Астана · Соответствие ст. 28 Закона РК о персональных данных
             </p>
           </div>
@@ -208,27 +208,27 @@ export default function ScrollStory() {
             <span className="text-xs font-bold text-accent uppercase tracking-wider">
               Первичный осмотр (форма №025/у)
             </span>
-            <span className="text-[10px] text-muted">SOAP Model</span>
+            <span className="text-[11px] text-muted">SOAP Model</span>
           </div>
 
           <div className="space-y-2 text-xs">
             <div className="p-2.5 rounded-lg bg-paper border border-border">
-              <span className="text-[10px] text-accent font-bold uppercase block mb-0.5">Жалобы</span>
+              <span className="text-[11px] text-accent font-bold uppercase block mb-0.5">Жалобы</span>
               <p className="text-ink">Головокружение по утрам (~3 нед.), головная боль в затылке, лёгкая тошнота.</p>
             </div>
 
             <div className="p-2.5 rounded-lg bg-paper border border-border">
-              <span className="text-[10px] text-accent font-bold uppercase block mb-0.5">Объективный статус</span>
+              <span className="text-[11px] text-accent font-bold uppercase block mb-0.5">Объективный статус</span>
               <p className="text-ink">АД 150/95 мм рт. ст., ЧСС 76 уд/мин, ритм правильный.</p>
             </div>
 
             <div className="p-2.5 rounded-lg bg-accent-pale/50 border border-accent/20">
-              <span className="text-[10px] text-accent font-bold uppercase block mb-0.5">Диагноз (МКБ-10)</span>
+              <span className="text-[11px] text-accent font-bold uppercase block mb-0.5">Диагноз (МКБ-10)</span>
               <p className="text-ink font-semibold">I10 — Эссенциальная (первичная) гипертензия</p>
             </div>
 
             <div className="p-2.5 rounded-lg bg-paper border border-border">
-              <span className="text-[10px] text-accent font-bold uppercase block mb-0.5">Назначения</span>
+              <span className="text-[11px] text-accent font-bold uppercase block mb-0.5">Назначения</span>
               <p className="text-ink">Эналаприл 10 мг 1 р/сут, дневник АД 2 р/день, ЭКГ, контроль через 3 нед.</p>
             </div>
           </div>
@@ -249,7 +249,7 @@ export default function ScrollStory() {
             <span className="text-xs font-bold text-ink flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-success" /> DamuMed: автозаполнение завершено
             </span>
-            <span className="text-[10px] text-success font-semibold bg-success/15 px-2 py-0.5 rounded">
+            <span className="text-[11px] text-success font-semibold bg-success/15 px-2 py-0.5 rounded">
               Готово к подписи
             </span>
           </div>
@@ -436,7 +436,7 @@ export default function ScrollStory() {
                     step.side === "right" ? "md:ml-auto" : ""
                   }`}
                 >
-                  <span className="font-mono text-[10px] sm:text-[11px] font-bold text-muted tracking-[0.2em] uppercase bg-paper px-3 py-1 rounded-full border border-border">
+                  <span className="text-[11px] font-bold text-muted tracking-[0.14em] uppercase bg-paper px-3 py-1 rounded-full border border-border">
                     {step.lineLabel}
                   </span>
                 </div>
@@ -458,10 +458,10 @@ export default function ScrollStory() {
                     <span className="text-accent text-xs font-bold uppercase tracking-wider">
                       Шаг 0{idx + 1}
                     </span>
-                    <h3 className="font-display text-2xl sm:text-3xl font-bold mt-1 mb-3 text-ink">
+                    <h3 className="font-display text-[22px] sm:text-3xl font-bold mt-1 mb-3 text-ink">
                       {step.title}
                     </h3>
-                    <p className="text-muted leading-relaxed text-sm sm:text-base">
+                    <p className="text-muted leading-relaxed text-base">
                       {step.description}
                     </p>
                   </motion.div>

@@ -68,7 +68,7 @@ export default function Products() {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.15 }}
-          className="grid lg:grid-cols-2 gap-6"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
         >
           {products.map((p) => (
             <motion.div
@@ -98,7 +98,7 @@ export default function Products() {
                   <ul className="space-y-2">
                     {p.capabilities.map((c) => (
                       <li key={c} className="flex items-start gap-2 text-sm">
-                        <span className="w-4 h-4 rounded-full bg-accent/15 text-accent flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                        <span className="w-4 h-4 rounded-full bg-accent/15 text-accent flex items-center justify-center text-[11px] shrink-0 mt-0.5">
                           <Check className="w-2.5 h-2.5" />
                         </span>
                         <span className={p.dark ? "text-white/80" : ""}>{c}</span>
@@ -113,7 +113,7 @@ export default function Products() {
                   <ul className="space-y-2">
                     {p.included.map((c) => (
                       <li key={c} className="flex items-start gap-2 text-sm">
-                        <span className="w-4 h-4 rounded-full bg-success/15 text-success flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                        <span className="w-4 h-4 rounded-full bg-success/15 text-success flex items-center justify-center text-[11px] shrink-0 mt-0.5">
                           <Check className="w-2.5 h-2.5" />
                         </span>
                         <span className={p.dark ? "text-white/80" : ""}>{c}</span>

@@ -30,7 +30,7 @@ export default function InsuranceOsms() {
       <div className="mx-auto max-w-6xl">
         <div className="max-w-3xl mb-12">
           <Eyebrow>Страховые и ОСМС</Eyebrow>
-          <h2 className="font-display text-3xl sm:text-5xl font-bold leading-tight mb-4">
+          <h2 className="font-display text-[26px] sm:text-5xl font-bold leading-tight mb-4">
             Страховая документация{" "}
             <span className="text-accent">без ошибок и потерь</span>
           </h2>
@@ -40,7 +40,7 @@ export default function InsuranceOsms() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Профилактика отказов */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -52,7 +52,7 @@ export default function InsuranceOsms() {
             <div className="w-11 h-11 rounded-xl bg-accent-pale flex items-center justify-center mb-5">
               <FileCheck2 className="w-5.5 h-5.5 text-accent" />
             </div>
-            <p className="font-mono text-[11px] font-bold text-muted tracking-[0.2em] uppercase mb-2">
+            <p className="text-[11px] font-bold text-muted tracking-[0.14em] uppercase mb-2">
               Профилактика отказов
             </p>
             <h3 className="font-display text-xl sm:text-2xl font-bold mb-2">
@@ -94,7 +94,7 @@ export default function InsuranceOsms() {
             <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center mb-5">
               <Gavel className="w-5.5 h-5.5 text-accent-light" />
             </div>
-            <p className="font-mono text-[11px] font-bold text-accent-light tracking-[0.2em] uppercase mb-2">
+            <p className="text-[11px] font-bold text-accent-light tracking-[0.14em] uppercase mb-2">
               Апелляции
             </p>
             <h3 className="font-display text-xl sm:text-2xl font-bold mb-2">
@@ -118,8 +118,8 @@ export default function InsuranceOsms() {
                   className="flex items-center justify-between rounded-xl bg-white/5 border border-white/10 px-4 py-3"
                 >
                   <span className="text-xs text-white/85">{row.doc}</span>
-                  <span className="text-[10px] font-bold text-success bg-success/15 px-2 py-0.5 rounded-full">
-                    ✓ {row.status}
+                  <span className="text-[11px] font-bold text-success bg-success/15 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                    <Check className="w-3 h-3" /> {row.status}
                   </span>
                 </div>
               ))}

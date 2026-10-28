@@ -21,7 +21,7 @@ const points = [
 export default function CommunicationQuality() {
   return (
     <section className="py-20 px-6">
-      <div className="mx-auto max-w-6xl grid lg:grid-cols-2 gap-10 items-center">
+      <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
         {/* Текст */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -30,7 +30,7 @@ export default function CommunicationQuality() {
           transition={{ duration: 0.5 }}
         >
           <Eyebrow>Качество приёма</Eyebrow>
-          <h2 className="font-display text-3xl sm:text-5xl font-bold leading-tight mb-4">
+          <h2 className="font-display text-[26px] sm:text-5xl font-bold leading-tight mb-4">
             Контроль и анализ{" "}
             <span className="text-accent">коммуникации</span>
           </h2>
@@ -88,7 +88,7 @@ export default function CommunicationQuality() {
                   Отправлено автоматически через Dariger AI
                 </p>
               </div>
-              <span className="text-[10px] font-bold text-success bg-success/10 px-2 py-1 rounded-full">
+              <span className="text-[11px] font-bold text-success bg-success/10 px-2 py-1 rounded-full">
                 Отправлено
               </span>
             </div>
@@ -117,7 +117,7 @@ export default function CommunicationQuality() {
                 </ul>
               </div>
 
-              <p className="text-muted leading-relaxed text-xs">
+              <p className="text-muted leading-relaxed text-xs break-words">
                 Если появятся вопросы или ухудшится самочувствие — свяжитесь с
                 клиникой: +7 (___) ___-__-__. Берегите себя!
               </p>

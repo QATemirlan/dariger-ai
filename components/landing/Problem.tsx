@@ -45,7 +45,7 @@ export default function Problem() {
     <section className="py-20 px-6">
       <div className="mx-auto max-w-6xl">
         <Eyebrow>Проблема</Eyebrow>
-        <h2 className="font-display text-3xl sm:text-5xl leading-tight mb-4 max-w-3xl font-bold">
+        <h2 className="font-display text-[26px] sm:text-5xl leading-tight mb-4 max-w-3xl font-bold">
           Врач должен лечить,{" "}
           <span className="text-muted">а не работать стенографистом</span>
         </h2>
@@ -66,14 +66,14 @@ export default function Problem() {
             <motion.div
               key={p.stat}
               variants={item}
-              className="rounded-2xl border border-border bg-white p-6 hover:shadow-md transition-shadow"
+              className="rounded-2xl border border-border bg-card p-6 transition-colors hover:border-accent/30"
             >
               <div className="w-10 h-10 rounded-xl bg-accent-pale flex items-center justify-center mb-4">
                 <p.icon className="w-5 h-5 text-accent" />
               </div>
               <p className="font-display text-3xl font-bold">{p.stat}</p>
               <p className="text-sm text-accent font-medium mt-1">{p.label}</p>
-              <p className="text-sm text-muted mt-2 leading-relaxed">{p.text}</p>
+              <p className="text-[15px] text-muted mt-2 leading-relaxed">{p.text}</p>
             </motion.div>
           ))}
         </motion.div>

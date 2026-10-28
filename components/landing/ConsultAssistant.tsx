@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, Activity, ClipboardCheck, Send, AlertTriangle } from "lucide-react";
+import { Sparkles, Activity, ClipboardCheck, Send, AlertTriangle, RefreshCw } from "lucide-react";
 import Eyebrow from "@/components/shared/Eyebrow";
 
 interface Feature {
@@ -20,10 +20,10 @@ function GuidelinesMockup() {
           Проанализируй жалобы и предложи дифдиагноз по клиническим протоколам МЗ РК.
         </p>
         <div className="flex gap-2 mt-3">
-          <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-2 py-1 text-[10px] font-mono">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-2 py-1 text-[11px] font-mono">
             анамнез.pdf
           </span>
-          <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-2 py-1 text-[10px] font-mono">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-2 py-1 text-[11px] font-mono">
             анализы_крови.pdf
           </span>
         </div>
@@ -31,10 +31,10 @@ function GuidelinesMockup() {
 
       <div className="max-w-[90%] rounded-2xl rounded-bl-md border border-border bg-white p-4 text-sm shadow-sm">
         <div className="flex items-center gap-2 mb-3">
-          <span className="rounded-md bg-accent text-white text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider">
+          <span className="rounded-md bg-accent text-white text-[11px] font-bold px-2 py-0.5 uppercase tracking-wider">
             Мнение ИИ
           </span>
-          <span className="rounded-md border border-accent/30 text-accent text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider">
+          <span className="rounded-md border border-accent/30 text-accent text-[11px] font-bold px-2 py-0.5 uppercase tracking-wider">
             КР МЗ РК
           </span>
         </div>
@@ -83,7 +83,7 @@ function ImagingMockup() {
             <span className="w-2 h-2 rounded-full bg-danger" />
             <span className="text-xs font-bold text-white">DICOM вьювер</span>
           </div>
-          <span className="text-[10px] text-accent-light font-mono bg-accent/20 px-2 py-0.5 rounded">
+          <span className="text-[11px] text-accent-light font-mono bg-accent/20 px-2 py-0.5 rounded">
             AI OVERLAY
           </span>
         </div>
@@ -113,7 +113,7 @@ function ImagingMockup() {
           ))}
         </div>
         <div className="mt-4 rounded-xl bg-white/5 border border-white/10 p-3 text-xs">
-          <p className="text-white/50 text-[10px] mb-1">Заключение ИИ</p>
+          <p className="text-white/50 text-[11px] mb-1">Заключение ИИ</p>
           <p className="text-white/90 leading-relaxed">
             Затемнение в нижней доле правого лёгкого. Рекомендовано сопоставить с
             результатами КТ и клинической картиной.
@@ -132,7 +132,7 @@ function SecondOpinionMockup() {
           <Sparkles className="w-4 h-4 text-accent" /> Мнение ИИ
         </span>
         <span className="text-xs text-accent font-semibold flex items-center gap-1">
-          ⟳ Обновить
+          <RefreshCw className="w-3.5 h-3.5" /> Обновить
         </span>
       </div>
 
@@ -180,7 +180,7 @@ function SecondOpinionMockup() {
             className="flex items-center justify-between rounded-lg px-3 py-2 mb-1.5 last:mb-0 bg-paper"
           >
             <span className="text-xs text-ink">{r.dx}</span>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${r.cls}`}>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${r.cls}`}>
               {r.level}
             </span>
           </div>
@@ -222,7 +222,7 @@ export default function ConsultAssistant() {
       <div className="mx-auto max-w-6xl">
         <div className="max-w-3xl mb-12">
           <Eyebrow>Быстрые решения</Eyebrow>
-          <h2 className="font-display text-3xl sm:text-5xl font-bold leading-tight mb-4">
+          <h2 className="font-display text-[26px] sm:text-5xl font-bold leading-tight mb-4">
             Всё для{" "}
             <span className="text-accent">быстрых клинических решений</span>
           </h2>
@@ -244,7 +244,7 @@ export default function ConsultAssistant() {
                   aria-pressed={isActive}
                   className={`relative text-left rounded-2xl border bg-white p-5 sm:p-6 transition-all duration-200 ${
                     isActive
-                      ? "border-accent/50 shadow-lg shadow-accent/10"
+                      ? "border-accent/50 shadow-md shadow-accent/10"
                       : "border-border hover:border-accent/25 hover:shadow-sm"
                   }`}
                 >
@@ -260,12 +260,9 @@ export default function ConsultAssistant() {
                       >
                         <f.icon className="w-5 h-5" />
                       </span>
-                      <span className="font-mono text-[10px] text-muted">
-                        0{i + 1}
-                      </span>
                     </div>
                     <div>
-                      <span className="inline-block font-mono text-[10px] font-bold tracking-[0.15em] text-accent border border-accent/25 rounded-full px-2.5 py-1 mb-2">
+                      <span className="inline-block text-[11px] font-bold tracking-[0.12em] text-accent border border-accent/25 rounded-full px-2.5 py-1 mb-2">
                         {f.tag}
                       </span>
                       <h3 className="font-display text-lg sm:text-xl font-bold text-ink leading-snug">

@@ -9,7 +9,7 @@ const styles: Record<Lang, string> = {
 
 export default function LangChip({ lang }: { lang: Lang }) {
   return (
-    <span className={`inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${styles[lang]}`}>
+    <span className={`inline-block rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${styles[lang]}`}>
       {lang === "mix" ? "kk+ru" : lang === "lat" ? "lat" : lang}
     </span>
   );
