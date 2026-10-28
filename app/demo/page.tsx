@@ -24,6 +24,9 @@ import {
   PenLine,
   X,
   CheckCircle2,
+  PanelRightClose,
+  PanelRightOpen,
+  UserRound,
 } from "lucide-react";
 import {
   misFields,
@@ -36,6 +39,7 @@ import {
 } from "@/lib/demo-data";
 import type { Replica } from "@/lib/demo-data";
 import LangChip from "@/components/shared/LangChip";
+import TourSpotlight, { type TourStep } from "@/components/shared/TourSpotlight";
 
 type MainNav = "visits" | "templates" | "integration" | "settings";
 type ScenarioPhase = "idle" | "recording" | "processing" | "ready";
@@ -140,6 +144,7 @@ const mockTemplates = [
 export default function DemoPage() {
   const [activeNav, setActiveNav] = useState<MainNav>("visits");
   const [selectedVisit, setSelectedVisit] = useState<PatientVisit>(mockVisits[0]);
+  const [visits, setVisits] = useState<PatientVisit[]>(mockVisits);
 
   // Visit simulation state
   const [scenarioPhase, setScenarioPhase] = useState<ScenarioPhase>("idle");
@@ -160,8 +165,19 @@ export default function DemoPage() {
   ]);
   const [chatInput, setChatInput] = useState("");
 
-  // Tour state: подсказка первого шага и тултип готового черновика
-  const [showTourHint, setShowTourHint] = useState(true);
+  // Tour state: многошаговый обучающий тур + праздник после подписи
+  const [tourStep, setTourStep] = useState(0); // -1 = тур выключен
+  const [tourActive, setTourActive] = useState(true);
+  const [showSignedCelebration, setShowSignedCelebration] = useState(false);
+
+  // Анкета нового приёма: «Как вас зовут?»
+  const [newVisitOpen, setNewVisitOpen] = useState(false);
+  const [patientName, setPatientName] = useState("");
+
+  // Панель ассистента: скрытие/показ + подсказки
+  const [chatOpen, setChatOpen] = useState(true);
+  const [chatHintSeen, setChatHintSeen] = useState(false);
+  const [chatInputHintSeen, setChatInputHintSeen] = useState(false);
   const [showDraftTooltip, setShowDraftTooltip] = useState(false);
   const [signed, setSigned] = useState(false);
 
@@ -223,7 +239,7 @@ export default function DemoPage() {
   }, [scenarioPhase]);
 
   // После обработки логично перевести пользователя туда, где данные отображаются:
-  // автопереход на вкладку протокола + короткий тултип.
+  // автопереход на вкладку протокола + короткий тултип + продолжение тура.
   useEffect(() => {
     if (scenarioPhase !== "ready") return;
     setActiveTab("note");
@@ -232,9 +248,80 @@ export default function DemoPage() {
     return () => window.clearTimeout(t);
   }, [scenarioPhase]);
 
+  // Тур: во время записи прячем затемнение, чтобы не мешать смотреть транскрипт.
+  const tourVisible =
+    tourActive && tourStep >= 0 && scenarioPhase !== "recording" && !newVisitOpen && !showSignedCelebration;
+
+  // Шаги тура. Доступные селекторы зависят от фазы сценария, поэтому шаги собраны
+  // как функция: она возвращает список, актуальный для текущего состояния.
+  const buildTourSteps = (): TourStep[] => {
+    const steps: TourStep[] = [
+      {
+        target: '[data-tour="new-visit"]',
+        title: "Нажмите «Новый приём»",
+        text: "Начните с создания нового приёма: нажмите эту кнопку и введите имя пациента — запись начнётся автоматически.",
+        onEnter: () => setActiveNav("visits"),
+      },
+      {
+        target: '[data-tour="record"]',
+        title: "Кнопка записи",
+        text: "Если приём уже создан — начните демо-запись этой кнопкой. Диалог врача с пациентом проиграется в ускоренном темпе.",
+      },
+      {
+        target: '[data-tour="timer"]',
+        title: "Таймер приёма",
+        text: "Здесь видно время приёма: 92 секунды реального разговора проигрываются примерно за 18 секунд (ускорение ×5).",
+      },
+      {
+        target: '[data-tour="transcript-tab"]',
+        title: "Живой транскрипт",
+        text: "Речь распознаётся в реальном времени: казахский и русский смешиваются, реплики автоматически делятся по ролям.",
+        onEnter: () => setActiveTab("transcript"),
+      },
+    ];
+    if (scenarioPhase === "ready" || scenarioPhase === "processing") {
+      steps.push(
+        {
+          target: '[data-tour="pipeline"]',
+          title: "Обработка записи",
+          text: "После записи: распознавание → обезличивание → структурирование → проверка полноты. Занимает пару секунд.",
+          onEnter: () => setActiveTab("note"),
+        },
+        {
+          target: '[data-tour="note-tab"]',
+          title: "Готовый протокол",
+          text: "SOAP-черновик по форме №025/у. Каждый факт снабжён ссылкой на реплику — проверьте и поправьте при необходимости.",
+          onEnter: () => setActiveTab("note"),
+        },
+        {
+          target: '[data-tour="copy"]',
+          title: "Копирование",
+          text: "Черновик можно скопировать одним кликом и вставить в любую систему.",
+        },
+        {
+          target: '[data-tour="sign"]',
+          title: "Подписать документы",
+          text: "Финальный шаг: проверьте черновик и подпишите документы — они отправятся в МИС.",
+          onEnter: () => {
+            document.querySelector('[data-tour="sign"]')?.scrollIntoView({ block: "center" });
+          },
+        },
+        {
+          target: '[data-tour="chat-panel"]',
+          title: "AI-ассистент",
+          text: "Также у вас есть ассистент — им можно воспользоваться в любой момент: спросить о совместимости лекарств или клиническом протоколе.",
+          onEnter: () => setChatOpen(true),
+        },
+      );
+    }
+    return steps;
+  };
+
+  const tourSteps = buildTourSteps();
+
   const handleToggleRecord = () => {
     if (scenarioPhase === "processing") return;
-    setShowTourHint(false);
+    setTourActive(false);
     if (scenarioPhase === "recording") {
       setRecordSeconds(REPLICA_MEDIA_SECONDS);
       setVisibleReplicas(replicas);
@@ -268,6 +355,7 @@ export default function DemoPage() {
   const handleSendChat = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!chatInput.trim()) return;
+    setChatInputHintSeen(true);
 
     const userText = chatInput;
     setChatMessages((prev) => [...prev, { sender: "user", text: userText }]);
@@ -280,6 +368,27 @@ export default function DemoPage() {
       }
       setChatMessages((prev) => [...prev, { sender: "ai", text: reply }]);
     }, 700);
+  };
+
+  // Новый приём: анкета «Как вас зовут?» → создание визита → автостарт записи
+  const handleStartNewVisit = () => {
+    const name = patientName.trim();
+    if (!name) return;
+    const newVisit: PatientVisit = {
+      id: `v-${Date.now()}`,
+      name,
+      time: "сейчас",
+      type: "Первичный приём · Терапевт",
+      status: "active",
+      gender: "Женский",
+      age: 48,
+      iinMasked: "••••••******",
+    };
+    setVisits((prev) => [newVisit, ...prev]);
+    setSelectedVisit(newVisit);
+    setNewVisitOpen(false);
+    setPatientName("");
+    handleToggleRecord();
   };
 
   const handlePushToEhr = () => {
@@ -398,10 +507,11 @@ export default function DemoPage() {
             <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-bold text-sm">Сегодня · 28 октября</span>
-                <span className="text-xs text-muted">4 приёма</span>
+                <span className="text-xs text-muted">{visits.length} приёма</span>
               </div>
               <button
-                onClick={() => alert("В демо-режиме открыт приём Айгерим Ибрагимовой")}
+                onClick={() => setNewVisitOpen(true)}
+                data-tour="new-visit"
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-accent text-white py-2.5 text-xs font-semibold hover:bg-accent-deep transition-colors shadow-sm"
               >
                 <Plus className="w-4 h-4" /> Новый приём
@@ -420,7 +530,7 @@ export default function DemoPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-3 space-y-1.5">
-              {mockVisits.map((v) => (
+              {visits.map((v) => (
                 <button
                   key={v.id}
                   onClick={() => setSelectedVisit(v)}
@@ -472,7 +582,7 @@ export default function DemoPage() {
 
               {/* Кнопка Capture аудио */}
               <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-                <div className="flex items-center gap-1 sm:gap-2 bg-paper border border-border px-2 sm:px-3 py-1.5 rounded-xl font-mono text-[11px] sm:text-xs whitespace-nowrap">
+                <div data-tour="timer" className="flex items-center gap-1 sm:gap-2 bg-paper border border-border px-2 sm:px-3 py-1.5 rounded-xl font-mono text-[11px] sm:text-xs whitespace-nowrap">
                   <Clock className="w-3.5 h-3.5 text-muted" />
                   <span>{formatTimer(recordSeconds)}</span>
                   <span className="hidden sm:inline text-[11px] text-muted">
@@ -484,11 +594,12 @@ export default function DemoPage() {
                   <button
                     onClick={handleToggleRecord}
                     disabled={scenarioPhase === "processing"}
+                    data-tour="record"
                     className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm disabled:cursor-wait disabled:opacity-60 ${
                       scenarioPhase === "recording"
                         ? "bg-danger text-white animate-pulse"
                         : "bg-accent text-white hover:bg-accent-deep shadow-accent/20"
-                    } ${showTourHint && scenarioPhase === "idle" ? "ring-4 ring-accent/30 relative z-30" : ""}`}
+                    }`}
                   >
                     {scenarioPhase === "recording" ? (
                       <>
@@ -507,31 +618,6 @@ export default function DemoPage() {
                     )}
                   </button>
 
-                  {/* Подсказка первого шага: экран затухает, подсвечена кнопка записи */}
-                  {showTourHint && scenarioPhase === "idle" && (
-                    <>
-                      <div className="fixed inset-0 z-20 bg-dark/50 backdrop-blur-[2px]" onClick={() => setShowTourHint(false)} />
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="absolute top-full right-0 mt-3 z-30 w-64 rounded-2xl bg-dark text-white p-4 shadow-xl"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-[11px] font-bold text-accent-light uppercase tracking-wider">Шаг 1 из 3</p>
-                          <button onClick={() => setShowTourHint(false)} aria-label="Закрыть подсказку" className="text-white/50 hover:text-white">
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <p className="text-sm font-semibold mt-1.5 leading-snug">Начните новый приём</p>
-                        <p className="text-xs text-white/70 mt-1.5 leading-relaxed">
-                          Нажмите «Запись приёма» — демо воспроизведёт разговор врача с пациентом в ускоренном темпе.
-                        </p>
-                        <button onClick={() => setShowTourHint(false)} className="mt-3 w-full rounded-xl bg-accent text-white py-2 text-xs font-bold hover:bg-accent-deep">
-                          Понятно
-                        </button>
-                      </motion.div>
-                    </>
-                  )}
                 </div>
 
                 <button
@@ -551,6 +637,7 @@ export default function DemoPage() {
                   onClick={() => setActiveTab("note")}
                   role="tab"
                   aria-selected={activeTab === "note"}
+                  data-tour="note-tab"
                   className={`py-3 text-xs font-semibold border-b-2 transition-colors ${
                     activeTab === "note"
                       ? "border-accent text-accent"
@@ -563,6 +650,7 @@ export default function DemoPage() {
                   onClick={() => setActiveTab("transcript")}
                   role="tab"
                   aria-selected={activeTab === "transcript"}
+                  data-tour="transcript-tab"
                   className={`py-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
                     activeTab === "transcript"
                       ? "border-accent text-accent"
@@ -591,6 +679,7 @@ export default function DemoPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCopyNote}
+                  data-tour="copy"
                   className="text-xs text-muted hover:text-ink flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-paper"
                 >
                   <Copy className="w-3.5 h-3.5" />
@@ -636,7 +725,7 @@ export default function DemoPage() {
                       )}
                     </div>
                     {scenarioPhase === "processing" && (
-                      <div className="rounded-2xl border border-border bg-white p-5 space-y-2">
+                      <div data-tour="pipeline" className="rounded-2xl border border-border bg-white p-5 space-y-2">
                         <p className="text-xs font-bold uppercase tracking-wider text-accent mb-3">Пайплайн обработки</p>
                         {pipeline.map((stage, index) => {
                           const complete = processingStage > index;
@@ -730,8 +819,12 @@ export default function DemoPage() {
                       </p>
                     </div>
                     <button
-                      onClick={() => setSigned(true)}
+                      onClick={() => {
+                        setSigned(true);
+                        setTimeout(() => setShowSignedCelebration(true), 700);
+                      }}
                       disabled={signed}
+                      data-tour="sign"
                       className={`shrink-0 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold transition-all ${
                         signed
                           ? "bg-success/10 text-success border border-success/30 cursor-default"
@@ -816,14 +909,42 @@ export default function DemoPage() {
             </div>
           </div>
 
-          {/* Правая панель AI ЧАТ (ПО РЕФЕРЕНСУ FREED AI DEMO) */}
-          <div className="w-80 bg-white border-l border-border flex flex-col shrink-0 hidden xl:flex">
+          {/* Правая панель AI ЧАТ: сворачивается вправо, возвращается «язычком» */}
+          {chatOpen ? (
+          <motion.div
+            data-tour="chat-panel"
+            initial={false}
+            animate={{ width: 320, opacity: 1 }}
+            className="bg-white border-l border-border flex-col shrink-0 hidden xl:flex relative"
+          >
+            {/* Подсказка над чатом при первом появлении */}
+            {!chatHintSeen && (
+              <div className="absolute top-16 right-4 left-4 z-10 rounded-xl bg-dark text-white p-3 shadow-lg">
+                <p className="text-xs leading-relaxed">
+                  <span className="font-bold text-accent-light">Также у вас есть ассистент</span>
+                  — вы можете им воспользоваться в любой момент приёма.
+                </p>
+                <button onClick={() => setChatHintSeen(true)} className="mt-2 text-[11px] font-semibold text-accent-light hover:underline">
+                  Понятно
+                </button>
+              </div>
+            )}
             <div className="p-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-accent" />
                 <span className="font-bold text-sm">AI Клинический ассистент</span>
               </div>
-              <span className="text-[11px] text-muted bg-paper px-2 py-0.5 rounded">МЗ РК</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-muted bg-paper px-2 py-0.5 rounded">МЗ РК</span>
+                <button
+                  onClick={() => setChatOpen(false)}
+                  aria-label="Скрыть ассистента"
+                  title="Скрыть ассистента"
+                  className="p-1.5 rounded-lg text-muted hover:text-ink hover:bg-paper"
+                >
+                  <PanelRightClose className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Quick action chips */}
@@ -869,13 +990,18 @@ export default function DemoPage() {
 
             {/* Chat input */}
             <form onSubmit={handleSendChat} className="p-3 border-t border-border bg-white flex gap-2">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Спросить ассистента..."
-                className="flex-1 rounded-xl bg-paper border border-border px-3 py-2 text-xs focus:outline-accent"
-              />
+              <div className="flex-1 min-w-0">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Здесь вы можете спросить ассистента о чём угодно..."
+                  className="w-full rounded-xl bg-paper border border-border px-3 py-2 text-xs focus:outline-accent"
+                />
+                {!chatInputHintSeen && (
+                  <p className="text-[10px] text-muted mt-1 px-1">Задайте вопрос — получите ответ прямо в этом поле.</p>
+                )}
+              </div>
               <button
                 type="submit"
                 className="w-8 h-8 rounded-xl bg-accent text-white flex items-center justify-center shrink-0 hover:bg-accent-deep transition-colors"
@@ -883,7 +1009,18 @@ export default function DemoPage() {
                 <Send className="w-3.5 h-3.5" />
               </button>
             </form>
-          </div>
+          </motion.div>
+          ) : (
+            <button
+              onClick={() => setChatOpen(true)}
+              className="hidden xl:flex flex-col items-center gap-2 py-4 px-2 bg-white border-l border-border text-muted hover:text-accent transition-colors shrink-0"
+              aria-label="Показать ассистента"
+              title="Показать ассистента"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span className="text-[10px] font-semibold [writing-mode:vertical-rl]">Ассистент</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -1175,6 +1312,117 @@ export default function DemoPage() {
           </div>
         </div>
       )}
+
+      {/* Анкета нового приёма: «Как вас зовут?» */}
+      {newVisitOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-dark/60 p-4" onClick={() => setNewVisitOpen(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-3xl bg-white p-7 shadow-2xl"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div className="w-11 h-11 rounded-2xl bg-accent-pale text-accent flex items-center justify-center">
+                <UserRound className="w-5.5 h-5.5" />
+              </div>
+              <button onClick={() => setNewVisitOpen(false)} aria-label="Закрыть" className="text-muted hover:text-ink">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <h2 className="font-bold text-lg text-ink">Новый приём</h2>
+            <p className="text-sm text-muted mt-1.5 leading-relaxed">
+              Как вас зовут? Введите имя и фамилию пациента — приём начнётся автоматически.
+            </p>
+            <input
+              type="text"
+              value={patientName}
+              onChange={(e) => setPatientName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleStartNewVisit()}
+              placeholder="Например: Айгерим Ибрагимова"
+              autoFocus
+              className="mt-4 w-full rounded-xl bg-paper border border-border px-4 py-3 text-sm focus:outline-accent"
+            />
+            {patientName.trim() === "" && (
+              <p className="text-[11px] text-muted mt-2 px-1">Введите имя пациента, чтобы начать приём.</p>
+            )}
+            <button
+              onClick={handleStartNewVisit}
+              disabled={patientName.trim() === ""}
+              className="mt-4 w-full rounded-xl bg-accent text-white py-3 text-sm font-bold hover:bg-accent-deep transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Начать приём
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Праздник после подписи: документы подписаны + рекомендации */}
+      {showSignedCelebration && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-dark/70 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="w-full max-w-md rounded-3xl bg-white p-7 shadow-2xl"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-success/15 text-success flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <h2 className="font-bold text-xl text-ink">Документы подписаны и отправлены в МИС</h2>
+            <p className="text-sm text-muted mt-2 leading-relaxed">
+              Демо-приём полностью пройден: запись → обработка → протокол → подпись. Вот что можно попробовать дальше:
+            </p>
+            <div className="mt-5 space-y-2.5">
+              <button
+                onClick={() => { setShowSignedCelebration(false); setActiveNav("templates"); }}
+                className="w-full flex items-center gap-3 rounded-xl border border-border bg-paper px-4 py-3 text-left hover:border-accent/40 transition-colors"
+              >
+                <Layers className="w-5 h-5 text-accent shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-ink">Посмотреть шаблоны</p>
+                  <p className="text-xs text-muted mt-0.5">Адаптивные шаблоны и формы МЗ РК</p>
+                </div>
+              </button>
+              <button
+                onClick={() => { setShowSignedCelebration(false); setActiveNav("integration"); }}
+                className="w-full flex items-center gap-3 rounded-xl border border-border bg-paper px-4 py-3 text-left hover:border-accent/40 transition-colors"
+              >
+                <Plug className="w-5 h-5 text-accent shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-ink">Интеграция с МИС</p>
+                  <p className="text-xs text-muted mt-0.5">Как черновик попадает в DamuMed</p>
+                </div>
+              </button>
+              <button
+                onClick={() => { setShowSignedCelebration(false); setChatOpen(true); setChatInputHintSeen(true); }}
+                className="w-full flex items-center gap-3 rounded-xl border border-border bg-paper px-4 py-3 text-left hover:border-accent/40 transition-colors"
+              >
+                <Sparkles className="w-5 h-5 text-accent shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-ink">Спросить ассистента</p>
+                  <p className="text-xs text-muted mt-0.5">Вопросы о терапии и протоколах — прямо в чате</p>
+                </div>
+              </button>
+            </div>
+            <button
+              onClick={() => setShowSignedCelebration(false)}
+              className="mt-5 w-full rounded-xl bg-accent text-white py-3 text-sm font-bold hover:bg-accent-deep transition-colors"
+            >
+              Завершить тур
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Обучающий spotlight-тур */}
+      <TourSpotlight
+        steps={tourSteps}
+        active={tourVisible}
+        stepIndex={Math.min(tourStep, tourSteps.length - 1)}
+        onStepChange={setTourStep}
+        onFinish={() => setTourActive(false)}
+        onSkip={() => setTourActive(false)}
+      />
     </div>
   );
 }
