@@ -34,32 +34,12 @@ export default function PlatformLayers() {
   return (
     <section className="py-20 px-6">
       <div className="mx-auto max-w-6xl">
+        {/* Мобильный порядок: заголовок → текст → слои. На lg — текст слева, слои справа */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Левая часть — слои */}
-          <motion.div
-            variants={container}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            className="space-y-4"
-          >
-            {layers.map((l, i) => (
-              <motion.div
-                key={l.name}
-                variants={item}
-                className={`rounded-2xl p-6 text-white ${l.color}`}
-                style={{ marginLeft: `${i * 16}px` }}
-              >
-                <h3 className="font-display text-xl font-bold mb-1">{l.name}</h3>
-                <p className="text-sm text-white/80 leading-relaxed">{l.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* Правая часть — описание */}
-          <div>
+          {/* Описание — на мобильном первым */}
+          <div className="order-1 lg:order-2">
             <Eyebrow>Платформа</Eyebrow>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">
+            <h2 className="font-display text-[26px] sm:text-4xl font-bold mb-4">
               Одна платформа, три слоя
             </h2>
             <p className="text-muted leading-relaxed mb-6">
@@ -84,6 +64,27 @@ export default function PlatformLayers() {
               ))}
             </ul>
           </div>
+
+          {/* Слои — на мобильном вторым (внизу) */}
+          <motion.div
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.3 }}
+            className="space-y-4 order-2 lg:order-1"
+          >
+            {layers.map((l, i) => (
+              <motion.div
+                key={l.name}
+                variants={item}
+                className={`rounded-2xl p-6 text-white ${l.color}`}
+                style={{ marginLeft: `${i * 16}px` }}
+              >
+                <h3 className="font-display text-xl font-bold mb-1">{l.name}</h3>
+                <p className="text-sm text-white/80 leading-relaxed">{l.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </div>
     </section>
