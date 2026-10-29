@@ -383,7 +383,9 @@ export default function DemoPage() {
 
     // Ассистент отвечает через сервер-«мост» (или заготовки, если моста нет)
     try {
-      const base = process.env.NEXT_PUBLIC_AI_URL ?? "";
+      // Адрес ИИ-моста: env на сервере или дефолт (SmarterASP), с фолбэком на локальный /api
+      const base =
+        process.env.NEXT_PUBLIC_AI_URL ?? "http://qatemirlantemir-001-site1.ftempurl.com";
       const res = await fetch(`${base}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -396,7 +398,10 @@ export default function DemoPage() {
         signal: AbortSignal.timeout(32_000),
       });
       const data = await res.json();
-      setChatMessages((prev) => [...prev, { sender: "ai", text: data?.reply ?? localReply(userText) }]);
+      const reply = (typeof data?.reply === "string" ? data.reply : "")
+        .replace(/^\*\*+\s*$/, "") // пустые markdown-обрезки
+        .trim();
+      setChatMessages((prev) => [...prev, { sender: "ai", text: reply || localReply(userText) }]);
     } catch {
       // Статический GitHub Pages или мост недоступен — локальный демо-ответ
       await new Promise((r) => setTimeout(r, 700));
