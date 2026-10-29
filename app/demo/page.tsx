@@ -158,6 +158,7 @@ export default function DemoPage() {
   const [pushSuccess, setPushSuccess] = useState(false);
 
   // AI Chat state
+  const [aiTyping, setAiTyping] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ sender: "user" | "ai"; text: string }[]>([
     {
       sender: "ai",
@@ -361,22 +362,48 @@ export default function DemoPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSendChat = (e?: React.FormEvent) => {
+  const localReply = (userText: string) => {
+    let reply = "По клиническому протоколу МЗ РК при неэффективности монотерапии эналаприлом 5 мг рекомендуется комбинация с антагонистом кальция (амлодипин 5 мг) или диуретиком (индапамид 1.5 мг).";
+    if (userText.toLowerCase().includes("нпвп") || userText.toLowerCase().includes("совместим")) {
+      reply = "Внимание: при одновременном приёме иАПФ (эналаприл) и НПВП возможно снижение антигипертензивного эффекта и риск ухудшения функции почек (контроль СКФ).";
+    }
+    return reply;
+  };
+
+  const handleSendChat = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!chatInput.trim()) return;
     setChatInputHintSeen(true);
 
     const userText = chatInput;
-    setChatMessages((prev) => [...prev, { sender: "user", text: userText }]);
+    const history = [...chatMessages, { sender: "user", text: userText }] as typeof chatMessages;
+    setChatMessages(history);
     setChatInput("");
+    setAiTyping(true);
 
-    setTimeout(() => {
-      let reply = "По клиническому протоколу МЗ РК при неэффективности монотерапии эналаприлом 5 мг рекомендуется комбинация с антагонистом кальция (амлодипин 5 мг) или диуретиком (индапамид 1.5 мг).";
-      if (userText.toLowerCase().includes("нпвп") || userText.toLowerCase().includes("совместим")) {
-        reply = "Внимание: при одновременном приёме иАПФ (эналаприл) и НПВП возможно снижение антигипертензивного эффекта и риск ухудшения функции почек (контроль СКФ).";
-      }
-      setChatMessages((prev) => [...prev, { sender: "ai", text: reply }]);
-    }, 700);
+    // Ассистент отвечает через сервер-«мост» (или заготовки, если моста нет)
+    try {
+      const base = process.env.NEXT_PUBLIC_AI_URL ?? "";
+      const res = await fetch(`${base}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: history.map((m) => ({
+            role: m.sender === "user" ? "user" : "assistant",
+            content: m.text,
+          })),
+        }),
+        signal: AbortSignal.timeout(32_000),
+      });
+      const data = await res.json();
+      setChatMessages((prev) => [...prev, { sender: "ai", text: data?.reply ?? localReply(userText) }]);
+    } catch {
+      // Статический GitHub Pages или мост недоступен — локальный демо-ответ
+      await new Promise((r) => setTimeout(r, 700));
+      setChatMessages((prev) => [...prev, { sender: "ai", text: localReply(userText) }]);
+    } finally {
+      setAiTyping(false);
+    }
   };
 
   // Новый приём: анкета «Как вас зовут?» → создание визита → автостарт записи
@@ -1091,6 +1118,14 @@ export default function DemoPage() {
                   {msg.text}
                 </div>
               ))}
+              {aiTyping && (
+                <div className="text-xs rounded-xl p-3 leading-relaxed bg-paper border border-border text-ink mr-2 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" style={{ animationDelay: "300ms" }} />
+                  Ассистент печатает…
+                </div>
+              )}
             </div>
 
             {/* Chat input */}
@@ -1579,6 +1614,14 @@ export default function DemoPage() {
                   {msg.text}
                 </div>
               ))}
+              {aiTyping && (
+                <div className="text-xs rounded-xl p-3 leading-relaxed bg-paper border border-border text-ink mr-2 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" style={{ animationDelay: "300ms" }} />
+                  Ассистент печатает…
+                </div>
+              )}
             </div>
             <form onSubmit={(e) => { handleSendChat(e); }} className="p-3 border-t border-border bg-white flex gap-2">
               <div className="flex-1 min-w-0">
