@@ -3,6 +3,7 @@ import Header from "@/components/landing/Header";
 import Hero from "@/components/landing/Hero";
 import TrustStrip from "@/components/landing/TrustStrip";
 import Problem from "@/components/landing/Problem";
+import VoicesOfDoctors from "@/components/landing/VoicesOfDoctors";
 import PlatformLayers from "@/components/landing/PlatformLayers";
 import ScrollStory from "@/components/landing/ScrollStory";
 import ConsultAssistant from "@/components/landing/ConsultAssistant";
@@ -26,6 +27,7 @@ export default function Home() {
       <Hero />
       <TrustStrip />
       <Problem />
+      <VoicesOfDoctors />
       <PlatformLayers />
       <ScrollStory />
       <ConsultAssistant />
