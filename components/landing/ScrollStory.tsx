@@ -166,7 +166,7 @@ export default function ScrollStory() {
               <ShieldCheck className="w-4 h-4 text-accent-dark" /> Модуль деидентификации
             </span>
             <span className="text-[11px] text-success font-mono bg-success/20 px-2 py-0.5 rounded">
-              100% зашифровано
+              Деидентификация до модели
             </span>
           </div>
 
@@ -206,7 +206,7 @@ export default function ScrollStory() {
         <div className="rounded-2xl border border-border bg-white p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-border">
             <span className="text-xs font-bold text-accent uppercase tracking-wider">
-              Первичный осмотр (форма №025/у)
+              Первичный осмотр (форма №052/у)
             </span>
             <span className="text-[11px] text-muted">SOAP Model</span>
           </div>

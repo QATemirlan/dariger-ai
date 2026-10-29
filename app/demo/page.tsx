@@ -27,6 +27,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   UserRound,
+  Home,
 } from "lucide-react";
 import {
   misFields,
@@ -101,7 +102,7 @@ const mockVisits: PatientVisit[] = [
 const mockTemplates = [
   {
     id: "t-1",
-    name: "Первичный приём терапевта (форма №025/у)",
+    name: "Первичный приём терапевта (форма №052/у)",
     owner: "Я (Д-р Искакова)",
     activity: "2 часа назад",
     starred: true,
@@ -174,8 +175,14 @@ export default function DemoPage() {
   const [newVisitOpen, setNewVisitOpen] = useState(false);
   const [patientName, setPatientName] = useState("");
 
+  // Вкладки: скролл-шейд на мобильных
+  const tabsScrollRef = useRef<HTMLDivElement>(null);
+  const [tabsScrolled, setTabsScrolled] = useState(true);
+
   // Панель ассистента: скрытие/показ + подсказки
   const [chatOpen, setChatOpen] = useState(true);
+  // Мобильная шторка ассистента (bottom sheet)
+  const [chatSheetOpen, setChatSheetOpen] = useState(false);
   const [chatHintSeen, setChatHintSeen] = useState(false);
   const [chatInputHintSeen, setChatInputHintSeen] = useState(false);
   const [showDraftTooltip, setShowDraftTooltip] = useState(false);
@@ -298,7 +305,7 @@ export default function DemoPage() {
         {
           target: '[data-tour="note-tab"]',
           title: "Готовый протокол",
-          text: "SOAP-черновик по форме №025/у. Каждый факт снабжён ссылкой на реплику — проверьте и поправьте при необходимости.",
+          text: "SOAP-черновик по форме №052/у. Каждый факт снабжён ссылкой на реплику — проверьте и поправьте при необходимости.",
           onEnter: () => setActiveTab("note"),
         },
         {
@@ -495,6 +502,14 @@ export default function DemoPage() {
             >
               ← На главную сайта
             </Link>
+            <Link
+              href="/"
+              aria-label="На главную сайта"
+              title="На главную сайта"
+              className="md:hidden flex items-center justify-center w-10 h-10 mx-auto rounded-xl text-white/70 hover:text-white hover:bg-white/10"
+            >
+              <Home className="w-5 h-5" />
+            </Link>
           </div>
         </div>
       </aside>
@@ -568,17 +583,32 @@ export default function DemoPage() {
 
           {/* Рабочая зона активного визита */}
           <div className="min-w-0 flex-1 flex flex-col overflow-hidden bg-paper">
+            {/* Мобильный хедер списка приёмов (на десктопе скрыт — там полноценный сайдбар) */}
+            <div className="lg:hidden bg-white border-b border-border px-3 py-2.5 flex items-center justify-between gap-3 shrink-0">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-ink">Сегодня · 28 октября</p>
+                <p className="text-[11px] text-muted">{visits.length} приёма · выбран текущий</p>
+              </div>
+              <button
+                onClick={() => setNewVisitOpen(true)}
+                data-tour="new-visit"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-accent text-white px-3.5 py-2 text-xs font-semibold hover:bg-accent-deep transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Новый приём
+              </button>
+            </div>
+
             {/* Панель визита: шапка с кнопкой Capture */}
-            <div className="min-h-18 h-auto bg-white border-b border-border px-3 sm:px-6 py-2 sm:py-0 flex items-center gap-3 justify-between shrink-0">
+            <div className="min-h-18 h-auto bg-white border-b border-border px-3 sm:px-6 py-2.5 sm:py-0 flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 sm:justify-between shrink-0">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 min-w-0">
-                  <h1 className="font-bold text-base sm:text-lg text-ink truncate max-w-[145px] sm:max-w-none">{selectedVisit.name}</h1>
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                  <h1 className="font-bold text-base sm:text-lg text-ink break-words">{selectedVisit.name}</h1>
                   <span className="hidden sm:inline text-xs rounded-full bg-accent-pale text-accent px-2.5 py-0.5 font-medium border border-accent/20 shrink-0">
                     Повторный пациент
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-muted mt-0.5 truncate">
-                  {selectedVisit.gender}, {selectedVisit.age} лет · ИИН {selectedVisit.iinMasked} · Приём в 14:30
+                <p className="text-[11px] sm:text-xs text-muted mt-0.5 break-words">
+                  {selectedVisit.gender}, {selectedVisit.age} лет · ИИН {selectedVisit.iinMasked} · Приём в {selectedVisit.time}
                 </p>
               </div>
 
@@ -632,62 +662,89 @@ export default function DemoPage() {
               </div>
             </div>
 
-            {/* Вкладки: Протокол (SOAP) / Транскрипт kk-ru / Контекст */}
-            <div role="tablist" aria-label="Данные приёма" className="border-b border-border bg-white px-3 sm:px-6 flex items-center justify-between overflow-x-auto">
-              <div className="flex gap-4 sm:gap-6 min-w-max">
-                <button
-                  onClick={() => setActiveTab("note")}
-                  role="tab"
-                  aria-selected={activeTab === "note"}
-                  data-tour="note-tab"
-                  className={`py-3 text-xs font-semibold border-b-2 transition-colors ${
-                    activeTab === "note"
-                      ? "border-accent text-accent"
-                      : "border-transparent text-muted hover:text-ink"
-                  }`}
-                >
-                  Протокол приёма (SOAP · форма №025/у)
-                </button>
-                <button
-                  onClick={() => setActiveTab("transcript")}
-                  role="tab"
-                  aria-selected={activeTab === "transcript"}
-                  data-tour="transcript-tab"
-                  className={`py-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
-                    activeTab === "transcript"
-                      ? "border-accent text-accent"
-                      : "border-transparent text-muted hover:text-ink"
-                  }`}
-                >
-                  Живой транскрипт (kk/ru)
-                  <span className="text-[11px] bg-accent-pale text-accent px-1.5 py-0.5 rounded-md">
-                    {visibleReplicas.length}
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("context")}
-                  role="tab"
-                  aria-selected={activeTab === "context"}
-                  className={`py-3 text-xs font-semibold border-b-2 transition-colors ${
-                    activeTab === "context"
-                      ? "border-accent text-accent"
-                      : "border-transparent text-muted hover:text-ink"
-                  }`}
-                >
-                  Анамнез и данные пациента
-                </button>
-              </div>
+            {/* Вкладки: Протокол (SOAP) / Транскрипт kk-ru / Контекст.
+                На мобильном подписи короткие — все три влезают; шейд справа подсказывает скролл. */}
+            <div className="relative border-b border-border bg-white">
+              <div
+                ref={tabsScrollRef}
+                role="tablist"
+                aria-label="Данные приёма"
+                className="px-3 sm:px-6 flex items-center justify-between overflow-x-auto scrollbar-none"
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  setTabsScrolled(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+                }}
+              >
+                <div className="flex gap-3 sm:gap-6 min-w-max">
+                  <button
+                    onClick={(e) => {
+                      setActiveTab("note");
+                      e.currentTarget.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+                    }}
+                    role="tab"
+                    aria-selected={activeTab === "note"}
+                    data-tour="note-tab"
+                    className={`py-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === "note"
+                        ? "border-accent text-accent"
+                        : "border-transparent text-muted hover:text-ink"
+                    }`}
+                  >
+                    <span className="sm:hidden">Протокол</span>
+                    <span className="hidden sm:inline">Протокол приёма (SOAP)</span>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      setActiveTab("transcript");
+                      e.currentTarget.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+                    }}
+                    role="tab"
+                    aria-selected={activeTab === "transcript"}
+                    data-tour="transcript-tab"
+                    className={`py-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                      activeTab === "transcript"
+                        ? "border-accent text-accent"
+                        : "border-transparent text-muted hover:text-ink"
+                    }`}
+                  >
+                    <span className="sm:hidden">Транскрипт</span>
+                    <span className="hidden sm:inline">Живой транскрипт (kk/ru)</span>
+                    <span className="text-[11px] bg-accent-pale text-accent px-1.5 py-0.5 rounded-md">
+                      {visibleReplicas.length}
+                    </span>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      setActiveTab("context");
+                      e.currentTarget.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+                    }}
+                    role="tab"
+                    aria-selected={activeTab === "context"}
+                    className={`py-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === "context"
+                        ? "border-accent text-accent"
+                        : "border-transparent text-muted hover:text-ink"
+                    }`}
+                  >
+                    <span className="sm:hidden">Анамнез</span>
+                    <span className="hidden sm:inline">Анамнез и данные пациента</span>
+                  </button>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCopyNote}
-                  data-tour="copy"
-                  className="text-xs text-muted hover:text-ink flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-paper"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  {copied ? "Скопировано!" : "Копировать"}
-                </button>
+                  {/* Копирование — рядом со вкладками */}
+                  <button
+                    onClick={handleCopyNote}
+                    data-tour="copy"
+                    className="ml-1 sm:ml-4 text-xs text-muted hover:text-ink flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-paper whitespace-nowrap"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span className="hidden xs:inline">{copied ? "Скопировано!" : "Копировать"}</span>
+                  </button>
+                </div>
               </div>
+              {/* Шейд-индикатор: есть ещё вкладки справа */}
+              {tabsScrolled && (
+                <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white to-transparent" />
+              )}
             </div>
 
             {/* Подсказка внизу: черновик готов — подпишите документ */}
@@ -762,7 +819,7 @@ export default function DemoPage() {
                         {scenarioPhase === "idle"
                           ? "Нажмите «Запись приёма», чтобы увидеть, как смешанная речь врача и пациента превращается в структурированный протокол."
                           : scenarioPhase === "recording"
-                          ? "После записи система распознает речь, обезличит данные и подготовит SOAP-протокол по форме №025/у."
+                          ? "После записи система распознает речь, обезличит данные и подготовит SOAP-протокол по форме №052/у."
                           : "Последовательно проходят распознавание, деидентификация, структурирование и проверка полноты."}
                       </p>
                       {scenarioPhase === "idle" && (
@@ -1116,7 +1173,7 @@ export default function DemoPage() {
                       : "border-transparent text-muted hover:text-ink"
                   }`}
                 >
-                  Стандартизированные формы РК (№025/у)
+                  Стандартизированные формы РК (№052/у)
                 </button>
               </div>
             </div>
@@ -1460,6 +1517,86 @@ export default function DemoPage() {
             >
               Завершить тур
             </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Мобильный ассистент: floating-кнопка + шторка (xl:hidden) */}
+      <button
+        onClick={() => setChatSheetOpen(true)}
+        aria-label="Открыть ИИ-ассистента"
+        className="xl:hidden fixed bottom-5 right-4 z-30 w-14 h-14 rounded-full bg-accent text-white shadow-xl shadow-accent/30 flex items-center justify-center active:scale-95 transition-transform"
+      >
+        <Sparkles className="w-6 h-6" />
+      </button>
+
+      {chatSheetOpen && (
+        <div className="xl:hidden fixed inset-0 z-50 flex flex-col justify-end" onClick={() => setChatSheetOpen(false)}>
+          <div className="absolute inset-0 bg-dark/60" />
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            onClick={(e) => e.stopPropagation()}
+            className="relative bg-white rounded-t-3xl h-[75vh] flex flex-col shadow-2xl"
+          >
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-accent" />
+                <span className="font-bold text-sm">AI Клинический ассистент</span>
+              </div>
+              <button onClick={() => setChatSheetOpen(false)} aria-label="Закрыть" className="p-1.5 rounded-lg text-muted hover:text-ink hover:bg-paper">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3 border-b border-border bg-paper/50 space-y-1.5">
+              <p className="text-[11px] font-semibold uppercase text-muted tracking-wider">Быстрые вопросы</p>
+              <button
+                onClick={() => setChatInput("Проверить совместимость эналаприла и НПВП")}
+                className="w-full flex items-center gap-2 text-left text-[11px] p-2 rounded-lg bg-white border border-border hover:border-accent/40 text-muted hover:text-ink transition-colors"
+              >
+                <Zap className="w-3.5 h-3.5 text-warn shrink-0" />
+                <span className="line-clamp-1">Совместимость эналаприла и НПВП</span>
+              </button>
+              <button
+                onClick={() => setChatInput("Клинический протокол МЗ РК по АГ")}
+                className="w-full flex items-center gap-2 text-left text-[11px] p-2 rounded-lg bg-white border border-border hover:border-accent/40 text-muted hover:text-ink transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5 text-accent shrink-0" />
+                <span className="line-clamp-1">Протокол МЗ РК при гипертензии</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {chatMessages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`text-xs rounded-xl p-3 leading-relaxed ${
+                    msg.sender === "user"
+                      ? "bg-accent text-white ml-6"
+                      : "bg-paper border border-border text-ink mr-2"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              ))}
+            </div>
+            <form onSubmit={(e) => { handleSendChat(e); }} className="p-3 border-t border-border bg-white flex gap-2">
+              <div className="flex-1 min-w-0">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Здесь вы можете спросить ассистента о чём угодно..."
+                  className="w-full rounded-xl bg-paper border border-border px-3 py-2 text-xs focus:outline-accent"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-9 h-9 rounded-xl bg-accent text-white flex items-center justify-center shrink-0 hover:bg-accent-deep transition-colors"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
           </motion.div>
         </div>
       )}

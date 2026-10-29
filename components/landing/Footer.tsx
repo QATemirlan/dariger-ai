@@ -26,7 +26,7 @@ export default function Footer() {
         </div>
         <div className="pt-6 flex flex-col md:flex-row justify-between gap-4 text-[11px] text-white/40">
           <p>© 2026 Dariger AI · Республика Казахстан</p>
-          <p>Разработано с учётом приказа МЗ РК №79 и стандартов формы №025/у.</p>
+          <p>Разработано с учётом приказа МЗ РК №79 и стандартов формы №052/у.</p>
         </div>
       </div>
     </footer>

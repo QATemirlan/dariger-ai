@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import Eyebrow from "@/components/shared/Eyebrow";
 
 const stats = [
-  { value: "8 мин", label: "экономия на каждом приёме", note: "целевой ориентир" },
-  { value: "100%", label: "полнота заполнения полей", note: "целевой ориентир" },
+  { value: "до 2 мин", label: "меньше рутины на каждом приёме", note: "по мировым данным AI-скрайберов" },
+  { value: "все поля", label: "черновик по форме №052/у", note: "проверяет врач" },
   { value: "<4 с", label: "генерация черновика", note: "целевой ориентир" },
 ];
 

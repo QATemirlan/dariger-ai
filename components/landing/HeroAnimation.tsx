@@ -14,7 +14,7 @@ const consultLines = [
 const stages = [
   "Распознавание речи (kk/ru)",
   "Обезличивание ИИН и ФИО",
-  "Структурирование в форму №025/у",
+  "Структурирование в форму №052/у",
   "Проверка по стандартам МЗ РК",
 ];
 
@@ -150,7 +150,7 @@ export default function HeroAnimation() {
               Протокол осмотра
             </span>
             <span className="text-[11px] text-muted font-mono bg-accent-pale px-2 py-0.5 rounded-full">
-              форма №025/у
+              форма №052/у
             </span>
           </div>
 
