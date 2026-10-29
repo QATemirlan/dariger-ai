@@ -103,12 +103,13 @@ export async function POST(req: NextRequest) {
 
       const data = await upstream.json();
       const reply = data?.choices?.[0]?.message?.content;
-      // Короткий мусор (меньше 20 символов или голые звёздочки) считаем неудачной попыткой
-      if (typeof reply !== "string" || reply.replace(/[*\s]/g, "").length < 20) {
-        await sleep(attempt * 800);
+      // Обрывки модели («При», «Г», «**») — неудачная попытка; на повторе просим продолжить
+      const clean = typeof reply === "string" ? reply.trim() : "";
+      if (clean.replace(/[*\s]/g, "").length < 60) {
+        await sleep(attempt * 700);
         continue;
       }
-      return NextResponse.json({ reply: reply.trim(), mode: "ai" });
+      return NextResponse.json({ reply: clean, mode: "ai" });
     } catch {
       await sleep(attempt * 800);
     }
