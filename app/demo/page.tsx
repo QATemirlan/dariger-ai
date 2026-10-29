@@ -385,7 +385,7 @@ export default function DemoPage() {
     try {
       // Адрес ИИ-моста: env на сервере или дефолт (SmarterASP), с фолбэком на локальный /api
       const base =
-        process.env.NEXT_PUBLIC_AI_URL ?? "http://qatemirlantemir-001-site1.ftempurl.com";
+        process.env.NEXT_PUBLIC_AI_URL ?? "https://qatemirlantemir-001-site1.ftempurl.com";
       const res = await fetch(`${base}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
