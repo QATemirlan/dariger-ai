@@ -7,7 +7,9 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:static": "BUILD_MODE=static next build --webpack",
+    "build:server": "next build --webpack"
   },
   "dependencies": {
     "framer-motion": "^14.7.1",

@@ -23,12 +23,20 @@
 #### Вариант А — SmarterASP.NET (у вас уже есть аккаунт, 60 дней бесплатно)
 1. В панели SmarterASP создайте сайт типа **Node.js**.
 2. Привяжите GitHub-репозиторий `QATemirlan/dariger-ai` (они умеют собирать и деплоить автоматически).
+   ВАЖНО: команда сборки — `npm run build:server` (серверный режим с /api/chat).
+   GitHub Pages при этом продолжает собираться статикой (`build:static`) — режимы разведены.
 3. В настройках сайта добавьте переменные окружения (Application Settings / Environment Variables):
    - `AI_BASE_URL` — из таблицы выше
    - `AI_API_KEY` — ваш ключ
    - `AI_MODEL` — из таблицы выше
-4. Стартовая команда: `npm run start` (порт задаёт хостинг через `PORT`).
+   - `NODE_ENV` = production
+4. Стартовая команда: `npm run start` (порт задаёт хостинг через `PORT`, Next.js читает его сам).
+   Убедитесь, что Anonymous Authentication включена, а Windows Authentication выключена,
+   иначе сайт будет отдавать 401.
 5. После деплоя вы получите адрес вида `http://логин.smarterasp.net` — это адрес моста.
+   Проверка: `curl -X POST http://адрес/api/chat -H "Content-Type: application/json"
+   -d '{"messages":[{"role":"user","content":"test"}]}'` → должен вернуть JSON {"reply":...}.
+   Если 502/502.3 — приложение не стартовало: смотрите лог деплоя, пересоберите build:server.
 
 #### Вариант Б — Vercel (бесплатен навсегда для такого трафика, как альтернатива)
 1. https://vercel.com → Import Git Repository → выберите репозиторий.
