@@ -78,33 +78,42 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  try {
-    const upstream = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-        max_tokens: 500,
-        temperature: 0.3,
-      }),
-      signal: AbortSignal.timeout(30_000),
-    });
+  // Модель иногда отдаёт обрывки (одна буква, «**») — до 3 попыток с нарастающим ожиданием
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const upstream = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+          max_tokens: 500,
+          temperature: 0.3,
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
 
-    if (!upstream.ok) {
-      return NextResponse.json({ reply: fallbackReply(messages[messages.length - 1]?.content ?? ""), mode: "fallback" });
-    }
+      if (!upstream.ok) {
+        await sleep(attempt * 800);
+        continue;
+      }
 
-    const data = await upstream.json();
-    const reply = data?.choices?.[0]?.message?.content;
-    if (typeof reply !== "string" || !reply.trim()) {
-      return NextResponse.json({ reply: fallbackReply(messages[messages.length - 1]?.content ?? ""), mode: "fallback" });
+      const data = await upstream.json();
+      const reply = data?.choices?.[0]?.message?.content;
+      // Короткий мусор (меньше 20 символов или голые звёздочки) считаем неудачной попыткой
+      if (typeof reply !== "string" || reply.replace(/[*\s]/g, "").length < 20) {
+        await sleep(attempt * 800);
+        continue;
+      }
+      return NextResponse.json({ reply: reply.trim(), mode: "ai" });
+    } catch {
+      await sleep(attempt * 800);
     }
-    return NextResponse.json({ reply, mode: "ai" });
-  } catch {
-    return NextResponse.json({ reply: fallbackReply(messages[messages.length - 1]?.content ?? ""), mode: "fallback" });
   }
+  return NextResponse.json({ reply: fallbackReply(messages[messages.length - 1]?.content ?? ""), mode: "fallback" });
 }
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
