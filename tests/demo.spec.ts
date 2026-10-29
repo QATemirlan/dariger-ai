@@ -66,7 +66,9 @@ test("demo plays recording, processing pipeline, and SOAP draft", async ({ page 
   await expect(page.getByText("Документы подписаны и отправлены в МИС")).toBeVisible();
   await expect(page.getByRole("button", { name: /Подписано/ })).toBeDisabled();
 
-  await expect(page.getByText("Вот что можно попробовать дальше:")).toBeVisible({ timeout: 5_000 });
+  // Сначала подсказка про ИИ-ассистента, затем праздник с рекомендациями
+  await expect(page.getByText("Вот у вас здесь есть ИИ-ассистент")).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText("Вот что можно попробовать дальше:")).toBeVisible({ timeout: 10_000 });
   await page.getByRole("button", { name: "Завершить тур" }).click();
   await expect(page.getByText("Вот что можно попробовать дальше:")).not.toBeVisible();
 });
@@ -81,12 +83,12 @@ test("chat panel collapses and expands with hints", async ({ page }) => {
   await expect(page.getByText("Также у вас есть ассистент")).not.toBeVisible();
 
   // Сворачиваем панель вправо
-  await page.getByRole("button", { name: "Скрыть ассистента" }).click();
+  await page.getByRole("button", { name: "Свернуть ассистента" }).click();
   await expect(page.getByRole("button", { name: "Показать ассистента" })).toBeVisible();
 
-  // Возвращаем язычком
+  // Возвращаем язычком со стрелкой
   await page.getByRole("button", { name: "Показать ассистента" }).click();
-  await expect(page.getByRole("button", { name: "Скрыть ассистента" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Свернуть ассистента" })).toBeVisible();
   await expect(page.getByPlaceholder("Здесь вы можете спросить ассистента о чём угодно...")).toBeVisible();
 });
 

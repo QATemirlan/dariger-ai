@@ -248,9 +248,17 @@ export default function DemoPage() {
     return () => window.clearTimeout(t);
   }, [scenarioPhase]);
 
+  // После подписи: подсказка «вот у вас здесь есть ИИ-ассистент».
+  const [postSignHint, setPostSignHint] = useState(false);
+  useEffect(() => {
+    if (!postSignHint) return;
+    const t = window.setTimeout(() => setPostSignHint(false), 15_000);
+    return () => window.clearTimeout(t);
+  }, [postSignHint]);
+
   // Тур: во время записи прячем затемнение, чтобы не мешать смотреть транскрипт.
   const tourVisible =
-    tourActive && tourStep >= 0 && scenarioPhase !== "recording" && !newVisitOpen && !showSignedCelebration;
+    tourActive && tourStep >= 0 && scenarioPhase !== "recording" && !newVisitOpen && !showSignedCelebration && !postSignHint;
 
   // Шаги тура. Доступные селекторы зависят от фазы сценария, поэтому шаги собраны
   // как функция: она возвращает список, актуальный для текущего состояния.
@@ -305,12 +313,6 @@ export default function DemoPage() {
           onEnter: () => {
             document.querySelector('[data-tour="sign"]')?.scrollIntoView({ block: "center" });
           },
-        },
-        {
-          target: '[data-tour="chat-panel"]',
-          title: "AI-ассистент",
-          text: "Также у вас есть ассистент — им можно воспользоваться в любой момент: спросить о совместимости лекарств или клиническом протоколе.",
-          onEnter: () => setChatOpen(true),
         },
       );
     }
@@ -688,6 +690,51 @@ export default function DemoPage() {
               </div>
             </div>
 
+            {/* Подсказка внизу: черновик готов — подпишите документ */}
+            {scenarioPhase === "ready" && !signed && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="px-4 sm:px-6 pt-4"
+              >
+                <div className="rounded-2xl bg-accent text-white px-4 py-3 flex items-center justify-between gap-3 shadow-md">
+                  <p className="text-xs sm:text-sm font-semibold leading-snug">
+                    Запись обработана — теперь нужно подписать документ.
+                  </p>
+                  <button
+                    onClick={() => document.querySelector('[data-tour="sign"]')?.scrollIntoView({ block: "center", behavior: "smooth" })}
+                    className="shrink-0 rounded-full bg-white text-accent px-4 py-1.5 text-xs font-bold hover:bg-accent-pale transition-colors"
+                  >
+                    К подписи
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Подсказка после подписи: вот ИИ-ассистент */}
+            {postSignHint && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="px-4 sm:px-6 pt-4"
+              >
+                <div className="rounded-2xl bg-dark text-white px-4 py-3 flex items-center justify-between gap-3 shadow-md">
+                  <p className="text-xs sm:text-sm leading-snug">
+                    <Sparkles className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5 text-accent-light" />
+                    <span className="font-semibold">Вот у вас здесь есть ИИ-ассистент</span>
+                    — вы можете им воспользоваться: спросить о совместимости лекарств или клиническом протоколе.
+                  </p>
+                  <button
+                    onClick={() => setPostSignHint(false)}
+                    aria-label="Закрыть подсказку"
+                    className="shrink-0 text-white/60 hover:text-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
             {/* Контент активной вкладки */}
             <div className="flex-1 overflow-y-auto p-6">
               {pushSuccess && (
@@ -821,7 +868,8 @@ export default function DemoPage() {
                     <button
                       onClick={() => {
                         setSigned(true);
-                        setTimeout(() => setShowSignedCelebration(true), 700);
+                        setPostSignHint(true);
+                        setTimeout(() => setShowSignedCelebration(true), 6500);
                       }}
                       disabled={signed}
                       data-tour="sign"
@@ -938,9 +986,9 @@ export default function DemoPage() {
                 <span className="text-[11px] text-muted bg-paper px-2 py-0.5 rounded">МЗ РК</span>
                 <button
                   onClick={() => setChatOpen(false)}
-                  aria-label="Скрыть ассистента"
-                  title="Скрыть ассистента"
-                  className="p-1.5 rounded-lg text-muted hover:text-ink hover:bg-paper"
+                  aria-label="Свернуть ассистента"
+                  title="Свернуть ИИ-ассистента"
+                  className="p-1.5 rounded-lg text-muted hover:text-accent hover:bg-accent-pale/50 transition-colors"
                 >
                   <PanelRightClose className="w-4 h-4" />
                 </button>
@@ -1013,12 +1061,14 @@ export default function DemoPage() {
           ) : (
             <button
               onClick={() => setChatOpen(true)}
-              className="hidden xl:flex flex-col items-center gap-2 py-4 px-2 bg-white border-l border-border text-muted hover:text-accent transition-colors shrink-0"
+              data-tour="chat-collapsed"
+              className="group hidden xl:flex flex-col items-center gap-2.5 py-4 px-2.5 bg-white border-l border-border text-muted hover:text-accent hover:bg-accent-pale/40 transition-colors shrink-0"
               aria-label="Показать ассистента"
-              title="Показать ассистента"
+              title="Развернуть ИИ-ассистента"
             >
-              <Sparkles className="w-4 h-4" />
-              <span className="text-[10px] font-semibold [writing-mode:vertical-rl]">Ассистент</span>
+              <PanelRightOpen className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+              <span className="text-[10px] font-semibold [writing-mode:vertical-rl] tracking-wide">ИИ-ассистент</span>
+              <Sparkles className="w-3.5 h-3.5 opacity-60" />
             </button>
           )}
         </div>
