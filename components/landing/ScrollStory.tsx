@@ -307,7 +307,18 @@ export default function ScrollStory() {
         const dr = dot.getBoundingClientRect();
         endY = dr.top - cr.top + dr.height / 2;
       }
-      const g = buildSnake(pillXs, pillYs, endY, cr.width, cr.height);
+      // На мобильном змейка превращается в вертикальную рейку у левого края:
+      // контент отступает вправо (pl-8), линия не пересекает текст.
+      const RAIL_X = 14;
+      const g =
+        cr.width < 768
+          ? {
+              w: cr.width,
+              h: cr.height,
+              d: `M ${RAIL_X} 0 L ${RAIL_X} ${endY}`,
+              fractions: pillYs.map((y) => Math.min(1, y / endY)),
+            }
+          : buildSnake(pillXs, pillYs, endY, cr.width, cr.height);
       geomRef.current = g;
       setGeom(g);
     };
@@ -410,12 +421,12 @@ export default function ScrollStory() {
             </motion.div>
           )}
 
-          <div className="space-y-16 relative">
+          <div className="space-y-16 relative pl-8 md:pl-0">
             {steps.map((step, idx) => (
               <div key={step.badge} className="relative">
                 {/* Пилюля этапа: на десктопе в своей колонке (зигзаг), на мобильном по центру */}
                 <div
-                  className={`mb-6 flex justify-center md:w-1/2 ${
+                  className={`mb-6 flex justify-start md:justify-center md:w-1/2 ${
                     step.side === "right" ? "md:ml-auto" : ""
                   }`}
                 >
@@ -432,7 +443,7 @@ export default function ScrollStory() {
 
                 {/* Подпись к этапу на ленте */}
                 <div
-                  className={`mb-6 flex justify-center md:w-1/2 ${
+                  className={`mb-6 flex justify-start md:justify-center md:w-1/2 ${
                     step.side === "right" ? "md:ml-auto" : ""
                   }`}
                 >
@@ -483,13 +494,13 @@ export default function ScrollStory() {
 
           {/* Финальная точка — линия дорисовывается до неё, в колонке последнего шага */}
           <div
-            className={`mt-12 flex justify-center md:w-1/2 ${
+            className={`mt-12 flex justify-start md:justify-center md:w-1/2 pl-8 md:pl-0 ${
               steps[steps.length - 1].side === "right" ? "md:ml-auto" : ""
             }`}
           >
             <div
               ref={endRef}
-              className="w-4 h-4 rounded-full bg-accent ring-4 ring-accent-light shadow-md"
+              className="w-4 h-4 rounded-full bg-accent ring-4 ring-accent-light shadow-md -ml-[26px] md:ml-0"
             />
           </div>
         </div>
