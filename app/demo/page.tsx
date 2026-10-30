@@ -390,6 +390,7 @@ export default function DemoPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          context: "demo",
           messages: history.map((m) => ({
             role: m.sender === "user" ? "user" : "assistant",
             content: m.text,
