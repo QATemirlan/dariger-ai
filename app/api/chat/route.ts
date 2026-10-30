@@ -44,6 +44,18 @@ function fallbackReply(userText: string): string {
   return "По клиническому протоколу МЗ РК при неэффективности монотерапии эналаприлом 5 мг рекомендуется комбинация с антагонистом кальция (амлодипин 5 мг) или диуретиком (индапамид 1.5 мг).";
 }
 
+// CORS: демо на GitHub Pages зовёт мост из браузера — без этих заголовков
+// браузер блокирует чтение ответа (Failed to fetch на POST с Content-Type).
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
 export async function POST(req: NextRequest) {
   let messages: ChatMessage[] = [];
   try {
@@ -109,12 +121,12 @@ export async function POST(req: NextRequest) {
         await sleep(attempt * 700);
         continue;
       }
-      return NextResponse.json({ reply: clean, mode: "ai" });
+      return NextResponse.json({ reply: clean, mode: "ai" }, { headers: CORS_HEADERS });
     } catch {
       await sleep(attempt * 800);
     }
   }
-  return NextResponse.json({ reply: fallbackReply(messages[messages.length - 1]?.content ?? ""), mode: "fallback" });
+  return NextResponse.json({ reply: fallbackReply(messages[messages.length - 1]?.content ?? ""), mode: "fallback" }, { headers: CORS_HEADERS });
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
