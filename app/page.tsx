@@ -18,6 +18,7 @@ import Personas from "@/components/landing/Personas";
 import Security from "@/components/landing/Security";
 import FaqCta from "@/components/landing/FaqCta";
 import Footer from "@/components/landing/Footer";
+import AiFloatingChat from "@/components/landing/AiFloatingChat";
 
 export default function Home() {
   return (
@@ -42,6 +43,7 @@ export default function Home() {
       <Security />
       <FaqCta />
       <Footer />
+      <AiFloatingChat />
     </main>
   );
 }
